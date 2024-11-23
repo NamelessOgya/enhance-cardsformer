@@ -2,8 +2,8 @@
 import clr
 import random
 import os
-import System
-from System.Collections import *
+import sys
+from System.Collections import Generic 
 # sys.path.append("/home/xingdp/xia_wannian/HearthStoneAI/SabberStone-master/core-extensions/SabberStoneBasicAI/bin/Debug/netstandard2.0")
 clr.AddReference(
     os.getcwd() + "/Env/DllSimulator/SabberStoneCore.dll")
@@ -28,6 +28,7 @@ def check_race(card_entity):
     race_list = [0, 18, 15, 20, 14, 21, 23, 17, 24]
     race_id = None
     for (i, id) in enumerate(race_list):
+        id = Race(id) # treat id as Race instance
         if card_entity.IsRace(id):
             race_id = i
             break
@@ -35,14 +36,13 @@ def check_race(card_entity):
 
 def check_type(card_type):
     """
-        Get the card type
+        Get the card type from CardClass
     """
-    type_list = [4, 5, 7]
-    return type_list.index(card_type)
+    return card_type.value__
     # [0: minion, 1: spell, 2: weapon]
 
 def DeckList(deck_list, random_cards=False):
-    deck = System.Collections.Generic.List[Card]()
+    deck = Generic.List[Card]()
     for card_name in deck_list:
         card = Cards.FromName(card_name)
         if random_cards == True:
@@ -143,16 +143,16 @@ class Hearthstone:
         p1_deck = Deck.deck_list[random.randint(0, len(Deck.deck_list)-1)] if self.player1_deck is None else self.player1_deck
         p2_deck = Deck.deck_list[random.randint(0, len(Deck.deck_list)-1)] if self.player2_deck is None else self.player2_deck
 
-        self.game_config.Player1HeroClass = p1_deck["Class"]
+        self.game_config.Player1HeroClass = CardClass(p1_deck["Class"])
         self.game_config.Player1Deck = DeckList(p1_deck["Deck"], self.random_cards)
-        self.game_config.Player2HeroClass = p2_deck["Class"]
+        self.game_config.Player2HeroClass = CardClass(p2_deck["Class"])
         self.game_config.Player2Deck = DeckList(p2_deck["Deck"], self.random_cards)
         self.game = Game(self.game_config)
         self.game.StartGame()
         self.game.Process(ChooseTask.Mulligan(
-            self.game.Player1, System.Collections.Generic.List[int]()))
+            self.game.Player1, Generic.List[int]()))
         self.game.Process(ChooseTask.Mulligan(
-            self.game.Player2, System.Collections.Generic.List[int]()))
+            self.game.Player2, Generic.List[int]()))
         self.game.MainReady()
         position = self.game.CurrentPlayer.Name
         state = self.get_current_state()
@@ -191,7 +191,7 @@ class Hearthstone:
             hero_state[i, 14] = entity.DeckZone.Count
             hero_state[i, 15] = entity.HandZone.Count
             hero_state[i, 16] = entity.SecretZone.Count
-            hero_state[i, 17 + entity.BaseClass - 2] = 1
+            hero_state[i, 17 + entity.BaseClass.value__ - 2] = 1
             if i < 1:
                 hero_state[i, 26] = entity.Hero.NumAttacksThisTurn
                 hero_state[i, 27] = entity.NumCardsPlayedThisTurn
@@ -205,8 +205,9 @@ class Hearthstone:
 
         """
             Get the scalar feature vector of a hand card entity
+            todo 出力物の次元を確認
         """
-        card_feat = np.zeros((11, 23))
+        card_feat = np.zeros((11, 24)) #error出るので拡張してみる。23 ->24
         if current:
             handzone = self.game.CurrentPlayer.HandZone
         else:
@@ -228,6 +229,7 @@ class Hearthstone:
                 card_feat[i, 4] = entity.AttackDamage
                 card_feat[i, 5] = entity.Durability
                 card_feat[i, 6] = entity.Durability
+            # print(f"=== card feat ===\n{card_feat}")
             card_feat[i, 16 + type_id] = 1
         return card_feat
 
@@ -341,31 +343,45 @@ class Hearthstone:
         hand_num = self.game.CurrentPlayer.HandZone.Count
         for i in range(num_options):
             option = options[i]
+            
             option_name = type(option).__name__
             if option_name == 'EndTurnTask':
                 continue
+            
+            # ヒーローパワー使用
             elif option_name == 'HeroPowerTask':
                 hand_card_scalar_batch[i, hand_num, -1] = 1
                 if option.HasTarget:
                     if option.Target.Zone is not None:
-                        if option.Target.Zone.Controller.Name == self.game.CurrentPlayer.Name:
+                        if option.Target.Controller.Name == self.game.CurrentPlayer.Name:
                             minion_scalar_batch[i, option.Target.ZonePosition, -2] = 1
-                        elif option.Target.Zone.Controller.Name == self.game.CurrentOpponent.Name:
+                        elif option.Target.Controller.Name == self.game.CurrentOpponent.Name:
                             minion_scalar_batch[i, 7 + option.Target.ZonePosition, -2] = 1
                     elif option.Target == self.game.CurrentPlayer.Hero:
                         hero_scalar_batch[i, 0, -2] = 1
                     elif option.Target == self.game.CurrentOpponent.Hero:
                         hero_scalar_batch[i, 1, -2] = 1
+            
+            # カード使用
             elif option_name == 'PlayCardTask':
                 hand_card_scalar_batch[i, option.Source.ZonePosition, -1] = 1
                 if option.ZonePosition != -1:
                     # play minions, the target has a 'position' flag in -3
                     minion_scalar_batch[i, option.ZonePosition, -3] = 1
+                
                 if option.HasTarget:
+                    
                     if option.Target.Zone is not None:
-                        if option.Target.Zone.Controller.Name == self.game.CurrentPlayer.Name:
+                        # print(f"=== target zone ===\n{dir(option.Target.Zone)}")
+                        # print(f"=== string ===\n{option.Target.Zone.ToString()}")
+                        # print(f"=== get all ===\n{option.Target.Zone.GetAll}")
+
+                        # print(f"=== target name ===\n{option.Target.Controller.Name}")
+
+
+                        if option.Target.Controller.Name == self.game.CurrentPlayer.Name:
                             minion_scalar_batch[i, option.Target.ZonePosition, -2] = 1
-                        elif option.Target.Zone.Controller.Name == self.game.CurrentOpponent.Name:
+                        elif option.Target.Controller.Name == self.game.CurrentOpponent.Name:
                             minion_scalar_batch[i, 7 + option.Target.ZonePosition, -2] = 1
                     elif option.Target == self.game.CurrentPlayer.Hero:
                         hero_scalar_batch[i, 0, -2] = 1
@@ -376,7 +392,7 @@ class Hearthstone:
             elif option_name == 'MinionAttackTask':
                 minion_scalar_batch[i, option.Source.ZonePosition, -1] = 1
                 if option.Target.Zone is not None:
-                    if option.Target.Zone.Controller.Name == self.game.CurrentOpponent.Name:
+                    if option.Target.Controller.Name == self.game.CurrentOpponent.Name:
                         minion_scalar_batch[i, 7 + option.Target.ZonePosition, -2] = 1
                 elif option.Target == self.game.CurrentPlayer.Hero:
                     hero_scalar_batch[i, 0, -2] = 1
@@ -386,9 +402,9 @@ class Hearthstone:
                 hero_scalar_batch[i, 0, -1] = 1
                 if option.HasTarget:
                     if option.Target.Zone is not None:
-                        if option.Target.Zone.Controller.Name == self.game.CurrentPlayer.Name:
+                        if option.Target.Controller.Name == self.game.CurrentPlayer.Name:
                             minion_scalar_batch[i, option.Target.ZonePosition, -2] = 1
-                        elif option.Target.Zone.Controller.Name == self.game.CurrentOpponent.Name:
+                        elif option.Target.Controller.Name == self.game.CurrentOpponent.Name:
                             minion_scalar_batch[i, 7 + option.Target.ZonePosition, -2] = 1
                     elif option.Target == self.game.CurrentPlayer.Hero:
                         hero_scalar_batch[i, 0, -2] = 1
