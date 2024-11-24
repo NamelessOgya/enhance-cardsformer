@@ -10,7 +10,7 @@ class PredictionModel(nn.Module):
         self.embed_dim = embed_dim
         self.entity_dim  = self.card_dim + self.embed_dim
 
-        self.hand_card_feat_embed = nn.Linear(23, card_dim)
+        self.hand_card_feat_embed = nn.Linear(24, card_dim) #サイズを変更した。gen-dataの際のサイズ変更がきいているかも
         self.minion_embeding = nn.Linear(26, card_dim)
         self.hero_embedding = nn.Linear(31, card_dim)
 

@@ -19,6 +19,7 @@ class PredictionDataset(Dataset):
 
         }
         for id in id_list:
+            print(f"=== load prediction dataset id={id} ===")
             if test:
                 data_path = './test_data' + str(id) + '.npy'
             else:

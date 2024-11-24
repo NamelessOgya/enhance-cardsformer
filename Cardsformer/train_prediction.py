@@ -11,18 +11,60 @@ from tqdm import tqdm
 import numpy as np
 import os
 
+import configparser
+import wandb
+from datetime import datetime, timezone, timedelta
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "4,5,6"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "4,5,6"
 
-train_step = 100000
+##### configs ########
+mode = "test"
+batch_size = 16000
+lr = 0.0001
+train_step = 5000
+######################
+
+
+PROJ_NAME = "reproduce-cards-former-debug" if mode == "debug" else "reproduce-cards-former"
+COMMON_CONFIG_PATH = os.path.abspath("./config/config.ini")
+
+config_ini = configparser.ConfigParser()
+config_ini.read(COMMON_CONFIG_PATH, encoding='utf-8')
+api_key = config_ini['WANDB']['api_key']
+
+# WandBの初期化
+# JSTの現在時刻を取得
+jst = timezone(timedelta(hours=9))  # JSTのタイムゾーン
+current_time = datetime.now(jst)
+experiment_name = current_time.strftime("EXP_%Y%m%d_%H%M")  # フォーマット: EXP_[年][月][日]_[時間][分]
+
+wandb.login(key=api_key)
+wandb.init(
+    project=PROJ_NAME,  # プロジェクト名
+    name = experiment_name,
+    config={
+        "learning_rate": lr,
+        "batch_size": batch_size,
+        # "optimizer": optimizer.__class__.__name__,
+        # "loss_function": loss_fn.__class__.__name__,
+    }
+)
+
+# モデルをウォッチ（オプション：勾配などを追跡）
+best_test_loss = float('inf')
+
+
 
 model = PredictionModel(is_train=True)
+wandb.watch(model, log="all")
 
 
-data = PredictionDataset([i for i in range(10)])
-data_test = PredictionDataset([0, ], True)
+data = PredictionDataset([i for i in range(9)] if not mode == "debug" else [1])
+data_test = PredictionDataset([9]) 
+# test dataないのでtrain dataの一番最後をtestに。
+# TODO test dataを追加（もしくは、学習データをもう一ファイル増やす。）
 
-data_train = DataLoader(data, batch_size=20000, shuffle=True, num_workers=0)
+data_train = DataLoader(data, batch_size=batch_size, shuffle=True, num_workers=0)
 data_test = DataLoader(data_test, batch_size=5000, shuffle=True)
 
 
@@ -31,7 +73,7 @@ if torch.cuda.is_available():
     device = torch.cuda.current_device()
     model = torch.nn.DataParallel(model).to(device)
 loss_fn = torch.nn.MSELoss()
-optimizer = torch.optim.AdamW(model.parameters(), lr=0.0001)
+optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 best_test_loss = 100
 
 writer = SummaryWriter('runs/prediction_model')
@@ -39,7 +81,7 @@ writer = SummaryWriter('runs/prediction_model')
 for epoch in range(train_step):
     log.info("Epoch {} / {}".format(epoch, train_step))
     losses = []
-    for batch in tqdm(data_train, position=0, leave=True):
+    for batch in data_train:
         optimizer.zero_grad()
         for i in range(8):
             batch[i] = batch[i].float().to(device)
@@ -53,6 +95,7 @@ for epoch in range(train_step):
         loss.backward()
         optimizer.step()
     writer.add_scalar('training_loss', np.mean(losses), epoch)
+    wandb.log({"training_loss": np.mean(losses), "epoch": epoch}) # add
     log.info("Current Training Loss is: {}".format(loss))
     test_losses = []
     for batch in data_test:
@@ -67,10 +110,12 @@ for epoch in range(train_step):
         loss = loss1 + loss2
         test_losses.append(loss.mean().item())
     test_loss = np.mean(test_losses)
+    wandb.log({"test_loss": test_loss, "epoch": epoch})
     writer.add_scalar('test_loss', test_loss, epoch)
     if test_loss < best_test_loss:
         log.info('minion loss: {} \t hero loss: {}'.format(loss1, loss2))
         log.info('Best loss: {}'.format(test_loss))
+        
         best_test_loss = test_loss
         torch.save(
             {
@@ -78,4 +123,10 @@ for epoch in range(train_step):
                 'optimizer_state_dict': optimizer.state_dict(),
             }, 'trained_models/prediction_model' + str(epoch) + '.tar'
             )
+
+        wandb.log({"best_test_loss": best_test_loss, "model_path": 'trained_models/prediction_model' + str(epoch) + '.tar'})
+        
     writer.add_scalar('best_test_loss', best_test_loss.item(), epoch)
+    wandb.log({"best_test_loss": best_test_loss, "epoch": epoch})
+
+wandb.finish()

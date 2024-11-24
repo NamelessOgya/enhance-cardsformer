@@ -1,4 +1,4 @@
-__pycache__/*
+__pycache__/
 .ipynb_checkpoints/*
 callback/*
 singularity/tmp/*
@@ -13,3 +13,11 @@ chokosen-loveti.*
 *.out
 
 tmp/*
+
+*.npy
+
+Cardsformer/runs/*
+Cardsformer/trained_models/*
+Cardsformer/wandb/*
+
+!.gitkeep
