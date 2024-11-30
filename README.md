@@ -15,11 +15,11 @@ repositoryのルートディレクトリから
 (これは自分がローカルでビルドしたコンテナです。)  
 (kagayaki上ではroot権限がなくビルドできないので...)
   
-## 実行  
+## インタラクティブ実行    
 ### 1. 作業ノードを起動し、singularityコンテナに入る    
 以下を実行してインタラクティブインスタンスに入る。  
 ```
-qsub -q GPU-1 -l select=1:ngpus=1 -I
+qsub -q GPU-1 -l select=1:ngpus=1
 ```
 インスタンス内でrepositoryのルートディレクトリに移動し、
   
@@ -38,6 +38,23 @@ gitディレクトリへ移動
 cd ./tmp/cardsformer_clone
 ```  
 
-### 2.データ生成  
+## cloneからのバッチ実行　　
+### 1. git clone  
+略  
+  
+### 2. コンテナをダウンロード  
+```
+./make_new_sif_env.sh
+```  
+  
+### 3. ./run.shの書き換え  
+```enhance-cardsformer```となっている部分を```clone先ディレクトリ名```に書き換え  
+  
+### 4.実行  
+```qsub start_batch_job.sh```  
+  
 
 
+### todo  
+- lossが全部0になる問題  
+- model保存先ディレクトリが存在しない。

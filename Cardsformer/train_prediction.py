@@ -26,7 +26,7 @@ train_step = 5000
 
 
 PROJ_NAME = "reproduce-cards-former-debug" if mode == "debug" else "reproduce-cards-former"
-COMMON_CONFIG_PATH = os.path.abspath("./config/config.ini")
+COMMON_CONFIG_PATH = os.path.abspath("../config/config.ini")
 
 config_ini = configparser.ConfigParser()
 config_ini.read(COMMON_CONFIG_PATH, encoding='utf-8')

@@ -134,7 +134,9 @@ def act(i, device, free_queue, full_queue, model, buffers, flags):
         encoder.to(device)
         position, obs, options, done, episode_return = env.initial()
         prediction_model = PredictionModel()
-        checkpoint_states = torch.load("Model/model5294.tar", map_location='cpu')['model_state_dict']
+        # ハードコードされたモデル名を変更
+        # ほんとにこれがprediction modelでいいのかしら？は要確認
+        checkpoint_states = torch.load("./trained_models/prediction_model2.tar", map_location='cpu')['model_state_dict'] 
         new_state_dict = typing.OrderedDict()
         for k, v in checkpoint_states.items():
             name = k[7:]
@@ -160,6 +162,7 @@ def act(i, device, free_queue, full_queue, model, buffers, flags):
                     obs['next_minion_scalar'] = next_state[0]
                     obs['next_hero_scalar'] = next_state[1]
                     with torch.no_grad():
+                        # 環境の入力次元を変更したのでエラーが発生する。
                         agent_output = model.forward(hand_card_embed, minion_embed, secret_embed, weapon_embed, obs, num_options, actor = True)
                     agent_output = agent_output.argmax()
                     if np.random.rand() < flags.exp_epsilon:
