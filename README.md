@@ -50,9 +50,12 @@ cd ./tmp/cardsformer_clone
 ### 3. ./run.shの書き換え  
 ```enhance-cardsformer```となっている部分を```clone先ディレクトリ名```に書き換え  
   
-### 4.実行  
+### 4. configファイルの配置  
+```./config/config.ini```  
+
+### 5.実行  
 ```qsub start_batch_job.sh```  
-  
+
 
 
 ### todo  

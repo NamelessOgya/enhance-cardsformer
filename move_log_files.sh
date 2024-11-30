@@ -1,0 +1,1 @@
+cp ../enhance-cardsformer/Cardsformer/off_line_data*.npy ./Cardsformer/
