@@ -21,3 +21,5 @@ Cardsformer/trained_models/*
 Cardsformer/wandb/*
 
 !.gitkeep
+
+run.sh
