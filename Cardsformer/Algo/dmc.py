@@ -15,6 +15,40 @@ from torch import nn
 from Model.ModelWrapper import Model  # 网络模型
 from Algo.utils import get_batch, log, create_buffers, create_optimizers, act  # 这几个函数是干什么用的？
 
+import configparser
+import wandb
+from datetime import datetime, timezone, timedelta
+
+### add wandb logger ##################
+PROJ_NAME = "reproduce-cards-former-policy-model"
+COMMON_CONFIG_PATH = os.path.abspath("../config/config.ini")
+
+config_ini = configparser.ConfigParser()
+config_ini.read(COMMON_CONFIG_PATH, encoding='utf-8')
+api_key = config_ini['WANDB']['api_key']
+
+# WandBの初期化
+# JSTの現在時刻を取得
+jst = timezone(timedelta(hours=9))  # JSTのタイムゾーン
+current_time = datetime.now(jst)
+experiment_name = current_time.strftime("EXP_%Y%m%d_%H%M")  # フォーマット: EXP_[年][月][日]_[時間][分]
+
+wandb.login(key=api_key)
+wandb.init(
+    project=PROJ_NAME,  # プロジェクト名
+    name = experiment_name,
+    # config={
+    #     "learning_rate": lr,
+    #     "batch_size": batch_size,
+    #     # "optimizer": optimizer.__class__.__name__,
+    #     # "loss_function": loss_fn.__class__.__name__,
+    # }
+)
+
+#######################################
+
+
+
 mean_episode_return_buf = {
     p: deque(maxlen=100)
     for p in ['Player1', 'Player2']
@@ -259,7 +293,19 @@ def train(flags):
                 frames,
                 position_frames['Player1'],
                 position_frames['Player2'], fps, fps_avg,
-                position_fps['Player1'], position_fps['Player2'], pprint.pformat(stats))
+                position_fps['Player1'], position_fps['Player2'], pprint.pformat(stats)
+            )
+
+            wandb.log({
+                "frames": frames,
+                "Player1_frames": position_frames['Player1'],
+                "Player2_frames": position_frames['Player2'],
+                "fps": fps,
+                "fps_avg": fps_avg,
+                "Player1_fps": position_fps['Player1'],
+                "Player2_fps": position_fps['Player2'],
+                "stats": stats  # statsはそのまま辞書形式で記録
+            })
 
     except KeyboardInterrupt:
         return

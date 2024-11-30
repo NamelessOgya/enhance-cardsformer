@@ -84,7 +84,7 @@ def create_buffers(flags, device_iterator):
                 minion_embed=dict(size=(T, 14, 768), dtype=torch.float32),
                 weapon_embed=dict(size=(T, 2, 768), dtype=torch.float32),
                 secret_embed=dict(size=(T, 5, 768), dtype=torch.float32),
-                hand_card_scalar=dict(size=(T, 11, 23), dtype=torch.float32),
+                hand_card_scalar=dict(size=(T, 11, 24), dtype=torch.float32), # 次元変更 23 ->24
                 minion_scalar=dict(size=(T, 14, 26), dtype=torch.float32),
                 hero_scalar=dict(size=(T, 2, 31), dtype=torch.float32),
                 next_minion_scalar=dict(size=(T, 14, 9), dtype=torch.float32),
@@ -134,8 +134,7 @@ def act(i, device, free_queue, full_queue, model, buffers, flags):
         encoder.to(device)
         position, obs, options, done, episode_return = env.initial()
         prediction_model = PredictionModel()
-        # ハードコードされたモデル名を変更
-        # ほんとにこれがprediction modelでいいのかしら？は要確認
+        # [todo]ハードコードされたモデル名を変更
         checkpoint_states = torch.load("./trained_models/prediction_model2.tar", map_location='cpu')['model_state_dict'] 
         new_state_dict = typing.OrderedDict()
         for k, v in checkpoint_states.items():
@@ -162,13 +161,14 @@ def act(i, device, free_queue, full_queue, model, buffers, flags):
                     obs['next_minion_scalar'] = next_state[0]
                     obs['next_hero_scalar'] = next_state[1]
                     with torch.no_grad():
-                        # 環境の入力次元を変更したのでエラーが発生する。
                         agent_output = model.forward(hand_card_embed, minion_embed, secret_embed, weapon_embed, obs, num_options, actor = True)
                     agent_output = agent_output.argmax()
                     if np.random.rand() < flags.exp_epsilon:
-                        _action_idx = torch.randint(len(options), (1, ))[0]
+                        _action_idx = torch.randint(len(options), (1, ))[0].item()
                     else:
                         _action_idx = int(agent_output.cpu().detach().numpy())
+                    
+                    assert isinstance(_action_idx, int), f"_action_idx の型が int ではありません type: {type(_action_idx)}, _action_idx: {_action_idx}"
                     action = options[_action_idx]
                     hand_card_embed_buf[position].append(hand_card_embed)
                     minion_embed_buf[position].append(minion_embed)
@@ -210,7 +210,7 @@ def act(i, device, free_queue, full_queue, model, buffers, flags):
                         buffers[p]['minion_embed'][index][t, ...] = minion_embed_buf[p][t]
                         buffers[p]['weapon_embed'][index][t, ...] = weapon_embed_buf[p][t]
                         buffers[p]['secret_embed'][index][t, ...] = secret_embed_buf[p][t]
-                        buffers[p]['hand_card_scalar'][index][t, ...] =	hand_card_scalar_buf[p][t]
+                        buffers[p]['hand_card_scalar'][index][t, ...] =	hand_card_scalar_buf[p][t] #次元を変更したことによるエラー
                         buffers[p]['minion_scalar'][index][t, ...] = minion_scalar_buf[p][t]
                         buffers[p]['hero_scalar'][index][t, ...] = hero_scalar_buf[p][t]
                         buffers[p]['next_minion_scalar'][index][t, ...] = next_minion_scalar_buf[p][t]

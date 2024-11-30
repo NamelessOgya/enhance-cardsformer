@@ -14,7 +14,7 @@ class PolicyModel(nn.Module):
         self.secret_embedding  = nn.Linear(lm_dim, self.entity_dim - 1)
         self.pos_embedding = nn.Parameter(torch.tensor([i / 31 for i in range(32)]), requires_grad=False)
 
-        self.hand_card_feat_embed = nn.Linear(23, card_dim - 1)
+        self.hand_card_feat_embed = nn.Linear(24, card_dim - 1)
         self.minion_embeding = nn.Linear(26 + 9, card_dim - 1)
         self.hero_embedding = nn.Linear(31 + 16, card_dim - 1)
 
