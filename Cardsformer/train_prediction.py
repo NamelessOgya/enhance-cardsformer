@@ -24,7 +24,7 @@ lr = 0.0001
 train_step = 5000
 ######################
 
-
+### add wandb logger ##################
 PROJ_NAME = "reproduce-cards-former-debug" if mode == "debug" else "reproduce-cards-former"
 COMMON_CONFIG_PATH = os.path.abspath("../config/config.ini")
 
@@ -53,7 +53,7 @@ wandb.init(
 # モデルをウォッチ（オプション：勾配などを追跡）
 best_test_loss = float('inf')
 
-
+#######################################
 
 model = PredictionModel(is_train=True)
 wandb.watch(model, log="all")
