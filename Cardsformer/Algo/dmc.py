@@ -116,6 +116,15 @@ def train(flags):
     Then it will start subprocesses as actors. Then, it will call
     learning function with  multiple threads.
     """
+    ##### 結果格納dirの作成 ###########
+    model_save_dir = os.path.expanduser('%s/%s' %
+                            (flags.savedir, flags.xpid))
+        
+    print(f"save_model_dir : {model_save_dir}")
+    if not os.path.exists(model_save_dir):
+        os.makedirs(model_save_dir)
+
+    ##################################
     if not flags.actor_device_cpu or flags.training_device != 'cpu':
         if not torch.cuda.is_available():
             raise AssertionError(

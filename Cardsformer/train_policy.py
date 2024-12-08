@@ -11,4 +11,12 @@ if __name__ == "__main__":
 	print(flags)
 	print("==================")
 
+	model_save_dir = os.path.expanduser('%s/%s' %
+                           (flags.savedir, flags.xpid))
+	
+	print(model_save_dir)
+	if not os.path.exists(model_save_dir):
+		os.makedirs(model_save_dir)
+	
+	
 	train(flags)
