@@ -28,7 +28,7 @@ parser.add_argument('--load_model', action='store_true',
                     help='Load an existing model')
 parser.add_argument('--disable_checkpoint', action='store_true',
                     help='Disable saving checkpoint')
-parser.add_argument('--savedir', default='TrainedModels',
+parser.add_argument('--savedir', default='./trained_policy_model',
                     help='Root dir where experiment data will be saved')
 
 # Hyperparameters

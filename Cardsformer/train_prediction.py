@@ -25,6 +25,16 @@ train_step = 5000
 ######################
 
 ### add wandb logger ##################
+# get current_dir_name
+# 現在のディレクトリのパスを取得
+current_dir = os.getcwd()
+
+# 一つ上のディレクトリのパスを取得
+parent_dir = os.path.dirname(current_dir)
+
+# 一つ上のディレクトリ名を取得
+parent_dir_name = os.path.basename(parent_dir)
+
 PROJ_NAME = "reproduce-cards-former-debug" if mode == "debug" else "reproduce-cards-former"
 COMMON_CONFIG_PATH = os.path.abspath("../config/config.ini")
 
@@ -41,7 +51,7 @@ experiment_name = current_time.strftime("EXP_%Y%m%d_%H%M")  # フォーマット
 wandb.login(key=api_key)
 wandb.init(
     project=PROJ_NAME,  # プロジェクト名
-    name = experiment_name,
+    name = parent_dir_name + "_" + experiment_name,
     config={
         "learning_rate": lr,
         "batch_size": batch_size,
