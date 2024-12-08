@@ -48,16 +48,13 @@ cd ./tmp/cardsformer_clone
 ```  
   
 ### 3. ./run.shの書き換え  
-```enhance-cardsformer```となっている部分を```clone先ディレクトリ名```に書き換え  
+```runsh_generator.sh```を実行  
   
 ### 4. configファイルの配置  
 ```./config/config.ini```  
 
-### 5.実行  
+### 5.prediction modelの学習    
 ```qsub start_batch_job.sh```  
+※prediction model, policy modelの移植も忘れずに。
 
 
-
-### todo  
-- lossが全部0になる問題  
-- model保存先ディレクトリが存在しない。

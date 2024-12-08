@@ -1,3 +1,6 @@
+import os
+import re
+
 import torch
 import typing
 import traceback
@@ -14,6 +17,24 @@ from Algo.encoder import Encoder
 from Model.PredictionModel import PredictionModel
 
 import logging
+
+#### モデルファイル名称をサーチして、最新のモデルを取得する。 
+directory_path = "./trained_models"
+max_model = None
+max_value = -1
+for filename in os.listdir(directory_path):
+    try:
+        val = int(filename.split("prediction_model")[1].split(".tar")[0])
+        print(val)
+        if val > max_value:
+            max_value = val
+            max_model = filename
+    except:
+        pass
+print(f"max_model is {max_model}")
+
+MAX_VALUE = max_value
+
 
 shandle = logging.StreamHandler()
 shandle.setFormatter(
@@ -134,8 +155,7 @@ def act(i, device, free_queue, full_queue, model, buffers, flags):
         encoder.to(device)
         position, obs, options, done, episode_return = env.initial()
         prediction_model = PredictionModel()
-        # [todo]ハードコードされたモデル名を変更
-        checkpoint_states = torch.load("./trained_models/prediction_model2.tar", map_location='cpu')['model_state_dict'] 
+        checkpoint_states = torch.load(f"./trained_models/prediction_model{MAX_VALUE}.tar", map_location='cpu')['model_state_dict'] 
         new_state_dict = typing.OrderedDict()
         for k, v in checkpoint_states.items():
             name = k[7:]
@@ -205,7 +225,6 @@ def act(i, device, free_queue, full_queue, model, buffers, flags):
                         buffers[p]['done'][index][t, ...] = done_buf[p][t]
                         buffers[p]['episode_return'][index][t, ...] = episode_return_buf[p][t]
                         buffers[p]['target'][index][t, ...] = target_buf[p][t]
-                        # TODO
                         buffers[p]['hand_card_embed'][index][t, ...] = hand_card_embed_buf[p][t]
                         buffers[p]['minion_embed'][index][t, ...] = minion_embed_buf[p][t]
                         buffers[p]['weapon_embed'][index][t, ...] = weapon_embed_buf[p][t]
