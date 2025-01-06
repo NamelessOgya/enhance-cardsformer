@@ -19,6 +19,15 @@ tmp/*
 Cardsformer/runs/*
 Cardsformer/trained_models/*
 Cardsformer/wandb/*
+Cardsformer/trained_policy_model/*
+Cardsformer/experiment/prediction_policy_cycle/policy_models/*
+Cardsformer/experiment/prediction_policy_cycle/prediction_data/*
+Cardsformer/experiment/prediction_policy_cycle/prediction_models/*
+
+
+bot/*
+
+
 
 !.gitkeep
 

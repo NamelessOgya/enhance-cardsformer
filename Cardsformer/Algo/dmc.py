@@ -43,17 +43,17 @@ jst = timezone(timedelta(hours=9))  # JSTのタイムゾーン
 current_time = datetime.now(jst)
 experiment_name = current_time.strftime("EXP_%Y%m%d_%H%M")  # フォーマット: EXP_[年][月][日]_[時間][分]
 
-wandb.login(key=api_key)
-wandb.init(
-    project=PROJ_NAME,  # プロジェクト名
-    name = parent_dir_name + "_" + experiment_name,
-    # config={
-    #     "learning_rate": lr,
-    #     "batch_size": batch_size,
-    #     # "optimizer": optimizer.__class__.__name__,
-    #     # "loss_function": loss_fn.__class__.__name__,
-    # }
-)
+# wandb.login(key=api_key)
+# wandb.init(
+#     project=PROJ_NAME,  # プロジェクト名
+#     name = parent_dir_name + "_" + experiment_name,
+#     # config={
+#     #     "learning_rate": lr,
+#     #     "batch_size": batch_size,
+#     #     # "optimizer": optimizer.__class__.__name__,
+#     #     # "loss_function": loss_fn.__class__.__name__,
+#     # }
+# )
 
 #######################################
 
@@ -147,7 +147,7 @@ def train(flags):
 
     models = {}
     for device in device_iterator:
-        model = Model(device=device)
+        model = Model(device=str(device))
         model.share_memory()
         model.eval()
         models[device] = model
@@ -316,16 +316,16 @@ def train(flags):
                 position_fps['Player1'], position_fps['Player2'], pprint.pformat(stats)
             )
 
-            wandb.log({
-                "frames": frames,
-                "Player1_frames": position_frames['Player1'],
-                "Player2_frames": position_frames['Player2'],
-                "fps": fps,
-                "fps_avg": fps_avg,
-                "Player1_fps": position_fps['Player1'],
-                "Player2_fps": position_fps['Player2'],
-                "stats": stats  # statsはそのまま辞書形式で記録
-            })
+            # wandb.log({
+            #     "frames": frames,
+            #     "Player1_frames": position_frames['Player1'],
+            #     "Player2_frames": position_frames['Player2'],
+            #     "fps": fps,
+            #     "fps_avg": fps_avg,
+            #     "Player1_fps": position_fps['Player1'],
+            #     "Player2_fps": position_fps['Player2'],
+            #     "stats": stats  # statsはそのまま辞書形式で記録
+            # })
 
     except KeyboardInterrupt:
         return

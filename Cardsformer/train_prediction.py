@@ -78,7 +78,7 @@ data_train = DataLoader(data, batch_size=batch_size, shuffle=True, num_workers=0
 data_test = DataLoader(data_test, batch_size=5000, shuffle=True)
 
 
-device = 'cpu'
+device = 'cpu' ## <-?????
 if torch.cuda.is_available():
     device = torch.cuda.current_device()
     model = torch.nn.DataParallel(model).to(device)

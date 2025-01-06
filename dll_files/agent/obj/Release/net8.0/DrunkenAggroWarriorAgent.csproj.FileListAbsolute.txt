@@ -1,0 +1,6 @@
+/home/s2430014/research/enhance-cardsformer-dev/dll_files/agent/obj/Release/net8.0/DrunkenAggroWarriorAgent.csproj.AssemblyReference.cache
+/home/s2430014/research/enhance-cardsformer-dev/dll_files/agent/obj/Release/net8.0/DrunkenAggroWarriorAgent.GeneratedMSBuildEditorConfig.editorconfig
+/home/s2430014/research/enhance-cardsformer-dev/dll_files/agent/obj/Release/net8.0/DrunkenAggroWarriorAgent.AssemblyInfoInputs.cache
+/home/s2430014/research/enhance-cardsformer-dev/dll_files/agent/obj/Release/net8.0/DrunkenAggroWarriorAgent.AssemblyInfo.cs
+/home/s2430014/research/enhance-cardsformer-dev/dll_files/agent/obj/Release/net8.0/DrunkenAggroWarriorAgent.csproj.CoreCompileInputs.cache
+/home/s2430014/research/enhance-cardsformer-dev/dll_files/agent/obj/Release/net8.0/DrunkenAggroWarriorAgent.sourcelink.json

@@ -5,10 +5,13 @@ import os
 import sys
 from System.Collections import Generic 
 # sys.path.append("/home/xingdp/xia_wannian/HearthStoneAI/SabberStone-master/core-extensions/SabberStoneBasicAI/bin/Debug/netstandard2.0")
+
+base = os.getcwd() + "/../HearthstoneAICompetition/core-extensions/SabberStoneBasicAI/bin/Release/netcoreapp2.1"
 clr.AddReference(
-    os.getcwd() + "/Env/DllSimulator/SabberStoneCore.dll")
+    base + "/SabberStoneAICompetition.dll") #修正
+    
 clr.AddReference(
-    os.getcwd() + "/Env/DllSimulator/SabberStoneBasicAI.dll")
+    base + "/SabberStoneCore.dll") #修正
 import SabberStoneCore
 import SabberStoneBasicAI
 from SabberStoneBasicAI.Score import *
