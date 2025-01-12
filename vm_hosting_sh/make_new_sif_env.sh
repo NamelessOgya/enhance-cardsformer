@@ -1,0 +1,2 @@
+mkdir singularity
+docker pull namelessogya/cardsformer_env
