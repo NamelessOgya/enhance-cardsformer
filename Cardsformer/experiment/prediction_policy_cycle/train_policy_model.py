@@ -27,56 +27,14 @@ from torch import nn
 
 
 from Model.ModelWrapper import Model  # 网络模型
-from Algo.utils import get_batch, log, create_buffers, create_optimizers, act  # 这几个函数是干什么用的？
+# from Algo.utils import get_batch, log, create_buffers, create_optimizers, act  # 这几个函数是干什么用的？
+from experiment.util.act_util import get_batch, log, create_buffers, create_optimizers, act
 
-import configparser
 import wandb
-from datetime import datetime, timezone, timedelta
+
 
 from experiment.util.data_util import NpyLogData
 import gc
-
-
-
-### add wandb logger ##################
-# get current_dir_name
-# 現在のディレクトリのパスを取得
-current_dir = os.getcwd()
-
-
-# 一つ上のディレクトリのパスを取得
-parent_dir = os.path.dirname(current_dir)
-
-# 一つ上のディレクトリ名を取得
-parent_dir_name = os.path.basename(parent_dir)
-
-PROJ_NAME = "reproduce-cards-former-policy-model"
-COMMON_CONFIG_PATH = os.path.abspath("../config/config.ini")
-
-config_ini = configparser.ConfigParser()
-config_ini.read(COMMON_CONFIG_PATH, encoding='utf-8')
-api_key = config_ini['WANDB']['api_key']
-
-# WandBの初期化
-# JSTの現在時刻を取得
-jst = timezone(timedelta(hours=9))  # JSTのタイムゾーン
-current_time = datetime.now(jst)
-experiment_name = current_time.strftime("EXP_%Y%m%d_%H%M")  # フォーマット: EXP_[年][月][日]_[時間][分]
-
-# wandb.login(key=api_key)
-# wandb.init(
-#     project=PROJ_NAME,  # プロジェクト名
-#     name = parent_dir_name + "_" + experiment_name,
-#     # config={
-#     #     "learning_rate": lr,
-#     #     "batch_size": batch_size,
-#     #     # "optimizer": optimizer.__class__.__name__,
-#     #     # "loss_function": loss_fn.__class__.__name__,
-#     # }
-# )
-
-#######################################
-
 
 
 mean_episode_return_buf = {
@@ -129,7 +87,15 @@ def learn(position, actor_models, model, batch, optimizer, flags, lock):
             actor_model.get_model().load_state_dict(model.state_dict())
         return stats
 
-def train(flags,train_data_limit, data_num):
+def train(
+        flags,
+        prediction_model,
+        prediction_data_save_path,
+        policy_model_load_path,
+        best_policy_model_dir,
+        train_data_limit, 
+        data_num
+    ):
     """
     This is the main funtion for training. It will first
     initilize everything, such as buffers, optimizers, etc.
@@ -205,9 +171,9 @@ def train(flags,train_data_limit, data_num):
     position_frames = {'Player1': 0, 'Player2': 0}
 
     # Load models if any
-    if flags.load_model and os.path.exists(checkpointpath):
+    if policy_model_load_path != "NONE":
         checkpoint_states = torch.load(
-            checkpointpath,
+            policy_model_load_path + "/Cardsformer/model.tar",
             map_location=("cuda:" + str(flags.training_device)
                           if flags.training_device != "cpu" else "cpu"))
         learner_model.get_model().load_state_dict(checkpoint_states["model_state_dict"])
@@ -229,7 +195,7 @@ def train(flags,train_data_limit, data_num):
             actor = ctx.Process(target=act,
                                 args=(i, device, free_queue[device],
                                       full_queue[device], models[device],
-                                      buffers[device], flags, child_stop_event))
+                                      buffers[device], flags, child_stop_event,prediction_model))
             actor.start()
             actor_processes.append(actor)
 
@@ -246,7 +212,8 @@ def train(flags,train_data_limit, data_num):
                               full_queue[device][position],
                               buffers[device][position], flags, local_lock)
 			# npy_dataにbatchを保存
-            npy_data.save_data_from_buffer(batch)
+            if frames % 10000 == 0:
+                npy_data.save_data_from_buffer(batch)
             _stats = learn(position, models, learner_model.get_model(), batch, optimizer, flags, position_lock)
 
             with lock:
@@ -322,6 +289,7 @@ def train(flags,train_data_limit, data_num):
             time.sleep(5)
 
             if frames - last_save_frame > flags.frame_interval:
+                print("mdoel saved!")
                 checkpoint(frames - (frames % flags.frame_interval))
                 last_save_frame = frames - (frames % flags.frame_interval)
             end_time = timer()
@@ -344,57 +312,63 @@ def train(flags,train_data_limit, data_num):
                 position_fps['Player1'], position_fps['Player2'], pprint.pformat(stats)
             )
 
-            # wandb.log({
-            #     "frames": frames,
-            #     "Player1_frames": position_frames['Player1'],
-            #     "Player2_frames": position_frames['Player2'],
-            #     "fps": fps,
-            #     "fps_avg": fps_avg,
-            #     "Player1_fps": position_fps['Player1'],
-            #     "Player2_fps": position_fps['Player2'],
-            #     "stats": stats  # statsはそのまま辞書形式で記録
-            # })
+            wandb.log({
+                "POLOCY_frames": frames,
+                "POLOCY_Player1_frames": position_frames['Player1'],
+                "POLOCY_Player2_frames": position_frames['Player2'],
+                "POLOCY_fps": fps,
+                "POLOCY_fps_avg": fps_avg,
+                "POLOCY_Player1_fps": position_fps['Player1'],
+                "POLOCY_Player2_fps": position_fps['Player2'],
+                "POLOCY_stats": stats  # statsはそのまま辞書形式で記録
+            })
 
-			# 十分なnpyデータがたまったらroopを抜ける
+			
             if len(npy_data) > train_data_limit:
-                npy_data.save_to_npy(f"./experiment/prediction_policy_cycle/prediction_data/selfplay_data{num}.npy")
+                npy_data.save_to_npy(prediction_data_save_path + f"/off_line_data{(num-1) % 10}.npy")
                 npy_data = NpyLogData()
                 num += 1
 
-                if num > data_num:
-                    print("data_saved!!!")
-                    parent_stop_event.send("STOP")
-                    # for thread in threads:
-                    #     thread.join()
-                    # print("thread joined!!!")
-                    for actor in actor_processes:
-                        actor.join()
-                        actor.terminate()
-                        print("process terminated")
-                    torch.cuda.empty_cache()
-                    parent_stop_event.close()
-                    child_stop_event.close() 
-                    gc.collect()
-
-                    break
+        print("data_saved!!!")
+        parent_stop_event.send("STOP")
+        # for thread in threads:
+        #     thread.join()
+        # print("thread joined!!!")
+        for actor in actor_processes:
+            actor.join()
+            actor.terminate()
+            print("process terminated")
+        torch.cuda.empty_cache()
+        parent_stop_event.close()
+        child_stop_event.close() 
+        gc.collect()
 
     except KeyboardInterrupt:
         return
     
     print("every thing is done")
-    print(mp.active_children())
     # else:
     #     for thread in threads:
     #         thread.join()
     #     log.info('Learning finished after %d frames.', frames)
 
 
-def execute(
-        train_data_limit = 1000,
+def train_policy_model(
+        model_save_dir,
+        prediction_model,
+        prediction_data_save_path,
+        policy_model_load_path,
+        best_policy_model_dir,
+        total_frames,
+        train_data_limit = 100,
         data_num = 10,
-        model_save_dir = "experiment/prediction_policy_cycle/policy_models"
+        save_freq = 100
+
     ):
     flags = parser.parse_args()
+    flags.total_frames = total_frames
+    flags.frame_interval = 10000 # デバッグ用暫定対処
+    flags.num_actors = 1
     print("==================")
     print(flags)
     print("==================")
@@ -402,7 +376,20 @@ def execute(
     print(model_save_dir)
     if not os.path.exists(model_save_dir):
         os.makedirs(model_save_dir)
-    train(flags, train_data_limit, data_num)
+
+    flags.savedir = model_save_dir
+    print(f"== save_dir = {flags.savedir} ==")
+    
+    print(f"total frames ======== {flags.total_frames}")
+    train(
+        flags,
+        prediction_model,
+        prediction_data_save_path,
+        policy_model_load_path,
+        best_policy_model_dir,
+        train_data_limit, 
+        data_num
+    )
 
 if __name__ == "__main__":
     execute()

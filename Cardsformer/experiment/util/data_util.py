@@ -24,15 +24,30 @@ class NpyLogData:
         self.data['next_state_minion_scalar'].append(next_state['minion_scalar'].detach().cpu().numpy().astype(np.int64))
         self.data['next_state_hero_scalar'].append(next_state['hero_scalar'].detach().cpu().numpy().astype(np.int64))
 
+    def flatten_batch_np_array(self, ar):
+        if len(ar.shape) == 4:
+            return ar.reshape([-1, ar.shape[2], ar.shape[3]])
+        else:
+            return ar.reshape([-1, ar.shape[2]])
+
     def save_data_from_buffer(self, batch):
-        self.data['hand_card_names'].extend(batch['hand_card_embed'].detach().cpu().numpy())
-        self.data['minion_names'].extend(batch['minion_embed'].detach().cpu().numpy())
-        self.data['weapon_names'].extend(batch['weapon_embed'].detach().cpu().numpy())
-        self.data['hand_card_scalar'].extend(batch['hand_card_scalar'].detach().cpu().numpy().astype(np.int64))
-        self.data['minion_scalar'].extend(batch['minion_scalar'].detach().cpu().numpy().astype(np.int64))
-        self.data['hero_scalar'].extend(batch['hero_scalar'].detach().cpu().numpy().astype(np.int64))
-        self.data['next_state_minion_scalar'].extend(batch['next_minion_scalar'].detach().cpu().numpy().astype(np.int64))
-        self.data['next_state_hero_scalar'].extend(batch['next_hero_scalar'].detach().cpu().numpy().astype(np.int64))
+        hcn_npy  = self.flatten_batch_np_array(batch['hand_card_embed'].detach().cpu().numpy())
+        mn_npy   = self.flatten_batch_np_array(batch['minion_embed'].detach().cpu().numpy())
+        we_npy   = self.flatten_batch_np_array(batch['weapon_embed'].detach().cpu().numpy())
+        hcs_npy  = self.flatten_batch_np_array(batch['hand_card_scalar'].detach().cpu().numpy().astype(np.int64))
+        ms_npy   = self.flatten_batch_np_array(batch['minion_scalar'].detach().cpu().numpy().astype(np.int64))
+        hs_npy   = self.flatten_batch_np_array(batch['hero_scalar'].detach().cpu().numpy().astype(np.int64))
+        nsms_npy = self.flatten_batch_np_array(batch['next_minion_scalar'].detach().cpu().numpy().astype(np.int64))
+        nshs_npy = self.flatten_batch_np_array(batch['next_hero_scalar'].detach().cpu().numpy().astype(np.int64))
+
+        self.data['hand_card_names'].extend([hcn_npy[i] for i in range(len(hcn_npy))])
+        self.data['minion_names'].extend([mn_npy[i] for i in range(len(mn_npy))])
+        self.data['weapon_names'].extend([we_npy[i] for i in range(len(we_npy))])
+        self.data['hand_card_scalar'].extend([hcs_npy[i] for i in range(len(hcs_npy))])
+        self.data['minion_scalar'].extend([ms_npy[i] for i in range(len(ms_npy))])
+        self.data['hero_scalar'].extend([hs_npy[i] for i in range(len(hs_npy))])
+        self.data['next_state_minion_scalar'].extend([nsms_npy[i] for i in range(len(nsms_npy))])
+        self.data['next_state_hero_scalar'].extend([nshs_npy[i] for i in range(len(nshs_npy))])
 
     def save_to_npy(self, npy_name='off_line_data_vs_ai.npy'):
         np.save(npy_name, self.data)

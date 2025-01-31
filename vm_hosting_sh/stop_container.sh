@@ -1,0 +1,1 @@
+docker rm cardsformer_env_container

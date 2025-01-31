@@ -13,7 +13,7 @@ class Model:
         """
             device: device_id(str) ex: "0"
         """
-        self.device = "cpu" if device == "cpu" else "cuda:" + device
+        self.device = device
         self.models = {}
         
         print(f"device is {self.device}")

@@ -26,6 +26,7 @@ Cardsformer/experiment/prediction_policy_cycle/prediction_models/*
 
 
 bot/*
+**/res/**
 
 
 
