@@ -8,7 +8,7 @@ using SabberStoneCore.Model.Entities;
 
 namespace SabberStoneBasicAI.AIAgents
 {
-	class RandomAgent : AbstractAgent
+	public class RandomAgent : AbstractAgent
 	{
 		private Random Rnd = new Random();
 

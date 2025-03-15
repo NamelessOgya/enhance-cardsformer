@@ -11,7 +11,7 @@ using SabberStoneBasicAI.Meta;
 
 namespace SabberStoneBasicAI.PartialObservation
 {
-	partial class POGame
+	public partial class POGame
 	{
 		// define variable for "No Way!" card 
 		private static readonly Card PlaceHolder = Cards.FromId("LOEA04_31b");

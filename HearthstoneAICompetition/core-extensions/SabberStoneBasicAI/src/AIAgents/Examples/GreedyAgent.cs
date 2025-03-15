@@ -9,7 +9,7 @@ using System.Collections.Generic;
 namespace SabberStoneBasicAI.AIAgents
 {
 	// Plain old Greedy Bot
-	class GreedyAgent : AbstractAgent
+	public class GreedyAgent : AbstractAgent
 	{
 		public override void InitializeAgent() { }
 		public override void InitializeGame() { }

@@ -19,7 +19,7 @@ repositoryのルートディレクトリから
 ### 1. 作業ノードを起動し、singularityコンテナに入る    
 以下を実行してインタラクティブインスタンスに入る。  
 ```
-qsub -q GPU-1 -l select=1:ngpus=1 -I
+qsub -q -l select=1 -I
 ```
 インスタンス内でrepositoryのルートディレクトリに移動し、
   

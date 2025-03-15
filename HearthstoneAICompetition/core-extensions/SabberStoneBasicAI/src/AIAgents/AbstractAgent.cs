@@ -6,7 +6,7 @@ using SabberStoneCore.Enums;
 
 namespace SabberStoneBasicAI.AIAgents
 {
-	abstract class AbstractAgent
+	abstract public class AbstractAgent
 
 	{
 		public List<Card> preferedDeck;
