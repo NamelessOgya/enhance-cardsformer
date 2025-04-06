@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 
 class PredictionDataset(Dataset):
 
-    def __init__(self, id_list, test=False):
+    def __init__(self, id_list, test=False, base_path="."):
         super(Dataset, self).__init__()
         self.data = {
             'hand_card_names': [],
@@ -21,9 +21,9 @@ class PredictionDataset(Dataset):
         for id in id_list:
             print(f"=== load prediction dataset id={id} ===")
             if test:
-                data_path = './test_data' + str(id) + '.npy'
+                data_path = base_path + '/test_data' + str(id) + '.npy'
             else:
-                data_path = './off_line_data' + str(id) + '.npy'
+                data_path = base_path + '/off_line_data' + str(id) + '.npy'
             cur_data = np.load(data_path, allow_pickle=True).item()
             for key in cur_data:
                 if key == 'secret_names':
@@ -34,4 +34,13 @@ class PredictionDataset(Dataset):
         return len(self.data['hand_card_names'])
 
     def __getitem__(self, index, id=False):
-        return self.data['hand_card_names'][index], self.data['minion_names'][index], self.data['weapon_names'][index], self.data['hand_card_scalar'][index], self.data['minion_scalar'][index], self.data['hero_scalar'][index], self.data['next_state_minion_scalar'][index], self.data['next_state_hero_scalar'][index]
+        return (
+            self.data['hand_card_names'][index], 
+            self.data['minion_names'][index], 
+            self.data['weapon_names'][index], 
+            self.data['hand_card_scalar'][index], 
+            self.data['minion_scalar'][index], 
+            self.data['hero_scalar'][index], 
+            self.data['next_state_minion_scalar'][index], 
+            self.data['next_state_hero_scalar'][index]
+        )

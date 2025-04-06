@@ -19,13 +19,13 @@ from Model.PredictionModel import PredictionModel
 import logging
 
 #### モデルファイル名称をサーチして、最新のモデルを取得する。 
+
 directory_path = "./trained_models"
 max_model = None
 max_value = -1
 for filename in os.listdir(directory_path):
     try:
         val = int(filename.split("prediction_model")[1].split(".tar")[0])
-        print(val)
         if val > max_value:
             max_value = val
             max_model = filename

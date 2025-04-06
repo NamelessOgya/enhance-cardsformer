@@ -13,6 +13,23 @@ import os
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+def get_max_value_of_prediction_model(directory_path="./trained_models"):
+    directory_path = "./trained_models"
+    max_model = None
+    max_value = -1
+    for filename in os.listdir(directory_path):
+        try:
+            val = int(filename.split("prediction_model")[1].split(".tar")[0])
+            if val > max_value:
+                max_value = val
+                max_model = filename
+        except:
+            pass
+    print(f"max_model is {max_model}")
+
+    MAX_VALUE = max_value
+
+
 def load_prediction_model(prediction_model_tar, is_train=False):
     """
         prediction_model_tar

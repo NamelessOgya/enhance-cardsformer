@@ -15,6 +15,7 @@ chokosen-loveti.*
 tmp/*
 
 *.npy
+*.tar
 
 Cardsformer/runs/*
 Cardsformer/trained_models/*

@@ -22,7 +22,7 @@ from SabberStoneCore.Config import *
 from SabberStoneCore.Model import *
 from SabberStoneCore.Tasks.PlayerTasks import ChooseTask
 
-from Env.Deck import Deck
+from Env.Deck import Deck, TrainDeck, TestDeck
 
 def check_race(card_entity):
     """
@@ -103,7 +103,13 @@ def modify_cards():
 class Hearthstone:
     def __init__(self, random_cards=False, player1_name="Player1", player2_name="Player2", start_player=1,
                  fill_decks=False, shuffle=True, skip_mulligan=False, logging=False, history=False,
-                 player1_deck=None, player2_deck=None):
+                 player1_deck=None, player2_deck=None, deck_mode=None):
+        """
+            deck_mode:
+                None(default): use all decks
+                train: use train decks
+                test: use test decks
+        """
         game_config = GameConfig()
         game_config.StartPlayer = start_player
         game_config.Player1Name = player1_name
@@ -119,6 +125,14 @@ class Hearthstone:
         self.player2_deck = player2_deck
         self.random_cards = random_cards
 
+        if deck_mode is None:
+            self.deck_data_class = Deck
+        elif deck_mode == "train":
+            self.deck_data_class = TrainDeck
+        elif deck_mode == "test":
+            self.deck_data_class = TestDeck
+        else:
+            raise ValueError("deck_mode must be None, train or test")
 
     def step(self, action):
         self.game.Process(action)
@@ -143,8 +157,9 @@ class Hearthstone:
         return position, obs, options, reward, done
 
     def reset(self):
-        p1_deck = Deck.deck_list[random.randint(0, len(Deck.deck_list)-1)] if self.player1_deck is None else self.player1_deck
-        p2_deck = Deck.deck_list[random.randint(0, len(Deck.deck_list)-1)] if self.player2_deck is None else self.player2_deck
+        
+        p1_deck = self.deck_data_class.deck_list[random.randint(0, len(self.deck_data_class.deck_list)-1)] if self.player1_deck is None else self.player1_deck
+        p2_deck = self.deck_data_class.deck_list[random.randint(0, len(self.deck_data_class.deck_list)-1)] if self.player2_deck is None else self.player2_deck
 
         self.game_config.Player1HeroClass = CardClass(p1_deck["Class"])
         self.game_config.Player1Deck = DeckList(p1_deck["Deck"], self.random_cards)
