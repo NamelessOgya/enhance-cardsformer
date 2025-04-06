@@ -1,3 +1,11 @@
+import os
+
+# 環境変数を設定
+os.environ["PYTHONNET_RUNTIME"] = "coreclr"
+
+# 設定した環境変数を取得
+print(os.environ["PYTHONNET_RUNTIME"])
+
 from Env.Hearthstone import Hearthstone
 from Env.EnvWrapper import Environment
 import random
