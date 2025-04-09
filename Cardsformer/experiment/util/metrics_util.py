@@ -6,6 +6,6 @@ def accuracy_per_item(pred, label):
 
     res = pred_int == label_int #(batch, entity, item)
 
-    res = res.sum(dim=(0,1)) / (pred_int.shape[0] * pred_int.shape[1])  #(item)
+    res = res.to(torch.float).mean(dim=(0,1))  #(item)
 
     return res #(item)

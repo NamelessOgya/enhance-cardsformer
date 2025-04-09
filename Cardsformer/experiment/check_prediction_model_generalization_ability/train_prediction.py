@@ -1,4 +1,5 @@
 # python -m experiment.check_prediction_model_generalization_ability.train_prediction
+
 import os
 
 # 環境変数を設定
@@ -16,7 +17,7 @@ from tqdm import tqdm
 from Model.PredictionModel import PredictionModel
 import torch.optim
 from Algo.utils import log
-from tensorboardX import SummaryWriter
+# from tensorboardX import SummaryWriter
 from tqdm import tqdm
 import numpy as np
 import os
@@ -31,7 +32,7 @@ from experiment.util.metrics_util import accuracy_per_item
 
 ##### configs ########
 mode = "test"
-batch_size = 8000
+batch_size = 6000
 lr = 0.0001
 train_step = 5000
 ######################
@@ -78,7 +79,7 @@ best_test_loss = float('inf')
 #######################################
 
 model = PredictionModel(is_train=True)
-wandb.watch(model, log="all")
+# wandb.watch(model, log="all", log_freq=100)
 
 
 
@@ -108,7 +109,7 @@ loss_fn = torch.nn.MSELoss()
 optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 best_test_loss = 100
 
-writer = SummaryWriter('runs/prediction_model')
+# writer = SummaryWriter('runs/prediction_model')
 
 for epoch in range(train_step):
     log.info("Epoch {} / {}".format(epoch, train_step))
@@ -126,7 +127,7 @@ for epoch in range(train_step):
         losses.append(loss.mean().item())
         loss.backward()
         optimizer.step()
-    writer.add_scalar('training_loss', np.mean(losses), epoch)
+    # writer.add_scalar('training_loss', np.mean(losses), epoch)
     wandb.log({"training_loss": np.mean(losses), "epoch": epoch}) # add
     log.info("Current Training Loss is: {}".format(loss))
     test_losses = []
@@ -155,7 +156,7 @@ for epoch in range(train_step):
     test_ac_minion = torch.stack(test_ac_minion).mean(dim=0).to("cpu").numpy()
 
     wandb.log({"test_loss": test_loss, "epoch": epoch})
-    writer.add_scalar('test_loss', test_loss, epoch)
+    # writer.add_scalar('test_loss', test_loss, epoch)
 
     for n, i in enumerate(test_ac_hero):
         wandb.log({f"hero_ac_dim{n}": i, "epoch": epoch})
@@ -169,16 +170,23 @@ for epoch in range(train_step):
         log.info('Best loss: {}'.format(test_loss))
         
         best_test_loss = test_loss
-        torch.save(
-            {
-                'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-            }, './experiment/check_prediction_model_generalization_ability/trained_models/prediction_model' + str(epoch) + '.tar'
+        if epoch % 100 == 0:
+            # torch.save(
+            #     {
+            #         'model_state_dict': model.state_dict(),
+            #         'optimizer_state_dict': optimizer.state_dict(),
+            #     }, './experiment/check_prediction_model_generalization_ability/trained_models/prediction_model' + str(epoch) + '.tar'
+            #     )
+            torch.save(
+                {
+                    'model_state_dict': model.module.state_dict(),  # ← DataParallel対応
+                    'optimizer_state_dict': optimizer.state_dict(),
+                },
+                './experiment/check_prediction_model_generalization_ability/trained_models/prediction_model' + str(epoch) + '.tar'
             )
-
         wandb.log({"best_test_loss": best_test_loss, "model_path": './experiment/check_prediction_model_generalization_ability/trained_models/prediction_model' + str(epoch) + '.tar'})
         
-    writer.add_scalar('best_test_loss', best_test_loss.item(), epoch)
+    # writer.add_scalar('best_test_loss', best_test_loss.item(), epoch)
     wandb.log({"best_test_loss": best_test_loss, "epoch": epoch})
 
 wandb.finish()
