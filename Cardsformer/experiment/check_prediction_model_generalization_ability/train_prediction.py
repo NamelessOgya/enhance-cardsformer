@@ -32,7 +32,7 @@ from experiment.util.metrics_util import accuracy_per_item
 
 ##### configs ########
 mode = "test"
-batch_size = 6000
+batch_size = 8000
 lr = 0.0001
 train_step = 5000
 ######################
