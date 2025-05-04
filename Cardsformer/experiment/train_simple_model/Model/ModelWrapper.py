@@ -12,7 +12,10 @@ class Model:
         """
             device: device_id(str) ex: "0"
         """
-        self.device = f"cuda:{device}"
+        if device != "cpu":
+            self.device = f"cuda:{device}"
+        else:
+            self.device = device
         self.models = {}
 
         

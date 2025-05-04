@@ -34,6 +34,8 @@ import wandb
 
 
 from experiment.util.data_util import NpyLogData
+from experiment.train_simple_model.util.battle_util import evaluate_model_with_rulebase
+
 import gc
 
 
@@ -274,6 +276,19 @@ def train(
         torch.save(
             learner_model.get_model().state_dict(),
             model_weights_dir)
+        
+        print("evaluating...")
+        win_rate = evaluate_model_with_rulebase(
+            check_model_dir = model_weights_dir,
+            rule_model_name = "RandomAgent",
+            match_num = 50,
+            device = "cpu"
+        )
+        print(f"evaluation done {win_rate}")
+
+        wandb.log({
+                "WIN_RATE_against_RandomAgent": win_rate
+            })
 
     fps_log = []
     timer = timeit.default_timer
@@ -362,7 +377,7 @@ def train_policy_model(
     ):
     flags = parser.parse_args()
     flags.total_frames = total_frames
-    flags.frame_interval = 10000 # デバッグ用暫定対処
+    flags.frame_interval = 100000 # デバッグ用暫定対処
     flags.gpu_devices = "1"
     flags.num_actors = 8
     print("==================")

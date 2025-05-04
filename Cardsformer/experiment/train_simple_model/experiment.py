@@ -1,5 +1,5 @@
 """
-    python -m experiment.prediction_policy_cycle.experiment
+    python -m experiment.train_simple_model.experiment
 """
 
 import os
@@ -11,7 +11,7 @@ import wandb
 from experiment.train_simple_model.train_policy_model import train_policy_model
 from experiment.util.experiment_util import get_experiment_code
 from experiment.util.wandb_util import generate_experiment_info #api keyと親ディレクトリ名に応じたexperiment_nameを取得
-from experiment.util.model_util import find_best_prediction_model, find_best_policy_model
+from experiment.train_simple_model.util.model_util import find_best_policy_model
 
 def path_generator():
     
