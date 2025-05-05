@@ -8,8 +8,8 @@ docker rm -f cardsformer_env_container 2>/dev/null || true
 docker run -d \
   --gpus all \
   --name cardsformer_env_container \
-  -v "$(pwd)/..:/app" \
-  -w "/app/${DIR_NAME}" \
+  -v "$(pwd):/app" \
+  -w "/app" \
   --restart unless-stopped \
   namelessogya/cardsformer_env \
   tail -f /dev/null
