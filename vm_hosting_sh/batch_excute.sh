@@ -9,9 +9,7 @@ docker run -d \
   --gpus all \
   --name cardsformer_env_container \
   -v "$(pwd):/app" \
-  -w "/app" \
   --restart unless-stopped \
   namelessogya/cardsformer_env \
-  tail -f /dev/null
+  bash -c "cd ./Cardsformer && ./experiment/train_simple_model/experiment.sh" #実行コマンドに応じて変更
 
-exec docker exec -it cardsformer_env_container bash
