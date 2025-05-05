@@ -1,5 +1,5 @@
 """
-    python -m experiment.prediction_policy_cycle.experiment
+    python -m experiment.train_simple_model.experiment
 """
 
 import os
@@ -11,7 +11,7 @@ import wandb
 from experiment.train_simple_model.train_policy_model import train_policy_model
 from experiment.util.experiment_util import get_experiment_code
 from experiment.util.wandb_util import generate_experiment_info #api keyと親ディレクトリ名に応じたexperiment_nameを取得
-from experiment.util.model_util import find_best_prediction_model, find_best_policy_model
+from experiment.train_simple_model.util.model_util import find_best_policy_model
 
 def path_generator():
     
@@ -20,7 +20,7 @@ def path_generator():
         "policy_model_load_path":"NONE",
     }
 
-TOTAL_POLICY_FRAME = 10000000      #policy modelを学習する際のframe数
+TOTAL_POLICY_FRAME = 50000000      #policy modelを学習する際のframe数
 
 PROJ_NAME = "simple_model"
 info = generate_experiment_info()

@@ -1,3 +1,7 @@
+"""
+ python -m experiment.train_simple_model.Model.PolicyModel
+"""
+
 import torch
 import torch.nn as nn
 
@@ -144,3 +148,5 @@ class SimplePolicyModel(nn.Module):
 
         return out
 
+if __name__ == "__main__":
+    m = SimplePolicyModel()
