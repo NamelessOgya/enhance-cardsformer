@@ -20,7 +20,7 @@ def path_generator():
         "policy_model_load_path":"NONE",
     }
 
-TOTAL_POLICY_FRAME = 10000000      #policy modelを学習する際のframe数
+TOTAL_POLICY_FRAME = 50000000      #policy modelを学習する際のframe数
 
 PROJ_NAME = "simple_model"
 info = generate_experiment_info()

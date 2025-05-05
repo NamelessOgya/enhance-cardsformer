@@ -201,6 +201,9 @@ def train(
             actor.start()
             actor_processes.append(actor)
 
+     # ─── ここで親プロセス側の「子受信用端点」を閉じる ───  ← 修正
+    child_stop_event.close() 
+
     def batch_and_learn(i,
                         device,
                         position,
@@ -213,10 +216,17 @@ def train(
             batch = get_batch(free_queue[device][position],
                               full_queue[device][position],
                               buffers[device][position], flags, local_lock)
-			# npy_dataにbatchを保存
             if frames % 10000 == 0:
+                # バッチを保存
                 npy_data.save_data_from_buffer(batch)
+                # 保存後に内部バッファ（self.data）をクリア
+                for k in npy_data.data:
+                    npy_data.data[k].clear()
             _stats = learn(position, models, learner_model.get_model(), batch, optimizer, flags, position_lock)
+            
+             # バッチ自体も消す
+            del batch
+            gc.collect()
 
             with lock:
                 for k in _stats:
@@ -277,18 +287,22 @@ def train(
             learner_model.get_model().state_dict(),
             model_weights_dir)
         
-        print("evaluating...")
-        win_rate = evaluate_model_with_rulebase(
-            check_model_dir = model_weights_dir,
-            rule_model_name = "RandomAgent",
-            match_num = 50,
-            device = "cpu"
-        )
-        print(f"evaluation done {win_rate}")
+        res_dic = {}
+        for i in ["RandomAgent", "GreedyAgent"]:
+            print(f"=== evaluating vs {i}... ===")
+            win_rate = evaluate_model_with_rulebase(
+                check_model_dir = model_weights_dir,
+                rule_model_name = i,
+                match_num = 100,
+                device = "cpu"
+            )
+            print(f"evaluation done {win_rate}")
+            res_dic[f"WIN_RATE_against_{i}"] = win_rate
 
-        wandb.log({
-                "WIN_RATE_against_RandomAgent": win_rate
-            })
+
+            
+
+        wandb.log(res_dic)
 
     fps_log = []
     timer = timeit.default_timer
@@ -346,16 +360,21 @@ def train(
             #     num += 1
 
         print("data_saved!!!")
-        parent_stop_event.send("STOP")
+        # parent_stop_event.send("STOP")
         # for thread in threads:
         #     thread.join()
         # print("thread joined!!!")
+
+         # メインの学習ループが終わったら
+        parent_stop_event.send("STOP")
+        # ─── メッセージ送信直後に送信端点を閉じる ───  ← 修正
+        parent_stop_event.close()
         for actor in actor_processes:
             actor.join()
             actor.terminate()
             print("process terminated")
         torch.cuda.empty_cache()
-        parent_stop_event.close()
+        
         child_stop_event.close() 
         gc.collect()
 
@@ -379,7 +398,7 @@ def train_policy_model(
     flags.total_frames = total_frames
     flags.frame_interval = 100000 # デバッグ用暫定対処
     flags.gpu_devices = "1"
-    flags.num_actors = 8
+    flags.num_actors = 2
     print("==================")
     print(flags)
     print("==================")
