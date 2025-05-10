@@ -15,7 +15,27 @@ repositoryのルートディレクトリから
 (これは自分がローカルでビルドしたコンテナです。)  
 (kagayaki上ではroot権限がなくビルドできないので...)
   
-## インタラクティブ実行    
+### 2. Hearth stone環境のビルド  
+以下でコンテナに入る  
+```
+./start_container.sh  
+```  
+  
+コンテナ内で以下を実行  
+```
+cd Cardsformer
+python build_env.py
+```  
+  
+### 3. wandbモニタリングのためのAPI keyを追加  
+`./config/config.ini`を以下のように作成  
+```
+[WANDB]
+api_key = xxxxxxxxx
+```
+
+
+## インタラクティブ実行   
 ### 1. 作業ノードを起動し、singularityコンテナに入る    
 以下を実行してインタラクティブインスタンスに入る。  
 ```
