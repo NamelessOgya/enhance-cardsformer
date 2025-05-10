@@ -129,8 +129,10 @@ class Hearthstone:
             self.deck_data_class = Deck
         elif deck_mode == "train":
             self.deck_data_class = TrainDeck
+            print(f"load_env model is {deck_mode}")
         elif deck_mode == "test":
             self.deck_data_class = TestDeck
+            print(f"load_env model is {deck_mode}")
         else:
             raise ValueError("deck_mode must be None, train or test")
 

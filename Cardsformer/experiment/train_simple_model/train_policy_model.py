@@ -92,7 +92,8 @@ def learn(position, actor_models, model, batch, optimizer, flags, lock):
 def train(
         flags,
         policy_model_load_path,
-        best_policy_model_dir
+        best_policy_model_dir,
+        deck_mode = None
     ):
     """
     This is the main funtion for training. It will first
@@ -294,7 +295,8 @@ def train(
                 check_model_dir = model_weights_dir,
                 rule_model_name = i,
                 match_num = 100,
-                device = "cpu"
+                device = "cpu",
+                deck_mode = deck_mode
             )
             print(f"evaluation done {win_rate}")
             res_dic[f"WIN_RATE_against_{i}"] = win_rate
@@ -392,7 +394,8 @@ def train_policy_model(
         model_save_dir,
         policy_model_load_path,
         best_policy_model_dir,
-        total_frames
+        total_frames,
+        deck_mode = None
     ):
     flags = parser.parse_args()
     flags.total_frames = total_frames
@@ -414,6 +417,7 @@ def train_policy_model(
     train(
         flags,
         policy_model_load_path,
-        best_policy_model_dir 
+        best_policy_model_dir,
+        deck_mode 
     )
 

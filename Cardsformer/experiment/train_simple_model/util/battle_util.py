@@ -25,6 +25,7 @@ clr.AddReference(
 from typing import OrderedDict
 
 
+
 # from transformers import AutoModel, AutoTokenizer
 import torch
 
@@ -134,9 +135,10 @@ class RuleAgent:
 
 def battle(
     player1_model,
-    player2_model
+    player2_model,
+    deck_mode = None
 ):
-    game = Hearthstone()
+    game = Hearthstone(deck_mode=deck_mode)
     env = Environment(game, device)
     position, obs, options, done, episode_return = env.initial()
 
@@ -169,7 +171,8 @@ def evaluate_model_with_rulebase(
     check_model_dir,
     rule_model_name,
     match_num = 100,
-    device = "cpu"
+    device = "cpu",
+    deck_mode = None
 ):
     win_num = 0
 
@@ -177,24 +180,26 @@ def evaluate_model_with_rulebase(
         check_model_dir,
         device = device   
     )
-    for i in tqdm(range(int(match_num)), desc = "agent: player1"):
+    for i in tqdm(range(int(match_num)), desc = "agent: player1", leave=False, position=0):
         p1_agent = agent
         p2_agent = RuleAgent(model_name = rule_model_name)
 
         res = battle(
             p1_agent,
-            p2_agent
+            p2_agent,
+            deck_mode = deck_mode
         )
         
         win_num += res["Player1"]
     
-    for i in tqdm(range(int(match_num)), desc = "agent: player2"):
+    for i in tqdm(range(int(match_num)), desc = "agent: player2", leave=False, position=0):
         p1_agent = RuleAgent(model_name = rule_model_name)
         p2_agent = agent
 
         res = battle(
             p1_agent,
-            p2_agent
+            p2_agent,
+            deck_mode = deck_mode
         )
         
         
