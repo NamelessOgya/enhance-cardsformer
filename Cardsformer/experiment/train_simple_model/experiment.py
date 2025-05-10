@@ -17,7 +17,9 @@ from experiment.train_simple_model.util.model_util import find_best_policy_model
 
 ####### config ##########
 # 後でhydra化
-DECK_MODE = "train" # train用の限られたデッキで学習するか。"train", "test", None(全デッキ)
+DECK_MODE = None # train用の限られたデッキで学習するか。"train", "test", None(全デッキ)
+USE_TEXT_FEATURE = False # text featureを使うかどうか
+
 ##########################
 
 def path_generator():
@@ -73,7 +75,8 @@ if __name__ == "__main__":
         policy_model_load_path =  dir_dic["policy_model_load_path"],
         total_frames = TOTAL_POLICY_FRAME,
         best_policy_model_dir = best_policy_model_dir,
-        deck_mode = DECK_MODE
+        deck_mode = DECK_MODE,
+        use_text_feature = USE_TEXT_FEATURE,
     )
 
     torch.cuda.empty_cache()

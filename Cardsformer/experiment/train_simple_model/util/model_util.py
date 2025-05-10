@@ -13,8 +13,8 @@ import os
 device = "0" if torch.cuda.is_available() else "cpu"
 
 
-def load_policy_model(checkpoint_path, device = device):
-    model =PolicyModel(device=device)
+def load_policy_model(checkpoint_path, device = device, use_text_feature = True):
+    model =PolicyModel(device=device,use_text_feature = use_text_feature)
     checkpoint_states = torch.load(checkpoint_path,map_location=device)
     model.get_model().load_state_dict(checkpoint_states)  
 

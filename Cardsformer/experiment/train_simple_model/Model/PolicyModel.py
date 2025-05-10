@@ -78,7 +78,7 @@ class PolicyModel(nn.Module):
 
 
 class SimplePolicyModel(nn.Module):
-    def __init__(self, card_dim = 64, lm_dim = 768, embed_dim = 256, dim_ff = 512):
+    def __init__(self, card_dim = 64, lm_dim = 768, embed_dim = 256, dim_ff = 512, use_text_feature = True):
         super().__init__()
         # Embedding Language Model output to a lower dimension
         self.card_dim = card_dim
@@ -103,10 +103,25 @@ class SimplePolicyModel(nn.Module):
             )
         self.fn_ln = nn.Linear(64, 1)
 
+        self.use_text_feature = use_text_feature
+
+        if not self.use_text_feature:
+            # text情報を使用しない場合、text情報をマスクする。
+            self._freeze_embedding()
+        else:
+            self._unfreeze_embedding()
+
 
     # Prediction modelの出力がnext_minion_scalarとnext_hero_scalarなので、これを除外する。
     def forward(self, hand_card_embed, minion_embed, secret_embed, weapon_embed, hand_card_scalar, minion_scalar, hero_scalar, num_options, actor = True):
         
+        if not self.use_text_feature:
+            # text情報を使用しない場合、text情報をマスクする。
+            hand_card_embed = torch.zeros_like(hand_card_embed)
+            minion_embed = torch.zeros_like(minion_embed)
+            secret_embed = torch.zeros_like(secret_embed)
+            weapon_embed = torch.zeros_like(weapon_embed)
+
 
         # card_embedから実数値を復元してる...ってこと！？
         hand_card_value = self.lm_embedding(hand_card_embed)
@@ -147,6 +162,27 @@ class SimplePolicyModel(nn.Module):
         out = self.fn_ln(out).squeeze()
 
         return out
+
+    def _freeze_embedding(self):
+        # requires_grad=False にして optimizer に入らないようにする
+        
+        for p in self.lm_embedding.parameters():
+            p.requires_grad = False
+
+        for p in self.secret_embedding.parameters():
+            p.requires_grad = False
+        
+        print("text emb layer is frozen !!")
+
+    def _unfreeze_embedding(self):
+        
+        for p in self.lm_embedding.parameters():
+            p.requires_grad = False
+
+        for p in self.secret_embedding.parameters():
+            p.requires_grad = False
+        
+        print("text emb layer is unfrozen !!")
 
 if __name__ == "__main__":
     m = SimplePolicyModel()

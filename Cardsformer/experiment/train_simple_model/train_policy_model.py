@@ -69,7 +69,17 @@ def learn(position, actor_models, model, batch, optimizer, flags, lock):
     next_minion_scalar = batch['next_minion_scalar'].to(device)
     next_hero_scalar = batch['next_hero_scalar'].to(device)
     with lock:
-        learner_outputs = model(hand_card_embed, minion_embed, secret_embed, weapon_embed, hand_card_scalar, minion_scalar, hero_scalar, num_options=None, actor = False)
+        learner_outputs = model(
+            hand_card_embed, 
+            minion_embed, 
+            secret_embed, 
+            weapon_embed, 
+            hand_card_scalar, 
+            minion_scalar, 
+            hero_scalar, 
+            num_options=None, 
+            actor = False
+        )
         loss = compute_loss(learner_outputs, target)
         stats = {
             'mean_episode_return_' + position:
@@ -93,7 +103,8 @@ def train(
         flags,
         policy_model_load_path,
         best_policy_model_dir,
-        deck_mode = None
+        deck_mode = None,
+        use_text_feature = True
     ):
     """
     This is the main funtion for training. It will first
@@ -136,7 +147,7 @@ def train(
 
     models = {}
     for device in device_iterator:
-        model = Model(device=str(device))
+        model = Model(device=str(device), use_text_feature = use_text_feature)
         model.share_memory()
         model.eval()
         models[device] = model
@@ -156,7 +167,7 @@ def train(
         }
         free_queue[device] = _free_queue
         full_queue[device] = _full_queue
-    learner_model = Model(device=flags.training_device)
+    learner_model = Model(device=flags.training_device,use_text_feature = use_text_feature)
 
 
     optimizer = create_optimizers(flags, learner_model)
@@ -296,7 +307,8 @@ def train(
                 rule_model_name = i,
                 match_num = 100,
                 device = "cpu",
-                deck_mode = deck_mode
+                deck_mode = deck_mode,
+                use_text_feature = use_text_feature
             )
             print(f"evaluation done {win_rate}")
             res_dic[f"WIN_RATE_against_{i}"] = win_rate
@@ -395,7 +407,9 @@ def train_policy_model(
         policy_model_load_path,
         best_policy_model_dir,
         total_frames,
-        deck_mode = None
+        deck_mode = None,
+        use_text_feature = True
+
     ):
     flags = parser.parse_args()
     flags.total_frames = total_frames
@@ -418,6 +432,7 @@ def train_policy_model(
         flags,
         policy_model_load_path,
         best_policy_model_dir,
-        deck_mode 
+        deck_mode,
+        use_text_feature = use_text_feature
     )
 
