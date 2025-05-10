@@ -75,14 +75,15 @@ class MlAgent:
     def __init__(
         self, 
         policy_model_checkpoint_path,
-        device = "cpu" #GPUの場合は数字の文字列
+        device = "cpu", #GPUの場合は数字の文字列
+        use_text_feature = True
     ):
         if device == "cpu":
             self.encoder = load_encoder(device = "cpu") #言語情報をembeddingするためのencoder
-            self.policy_model = load_policy_model(policy_model_checkpoint_path, device = "cpu")
+            self.policy_model = load_policy_model(policy_model_checkpoint_path, device = "cpu", use_text_feature = use_text_feature)
         else:
             self.encoder = load_encoder(device = f"cuda:{device}") #言語情報をembeddingするためのencoder
-            self.policy_model = load_policy_model(policy_model_checkpoint_path, device = device)
+            self.policy_model = load_policy_model(policy_model_checkpoint_path, device = device, use_text_feature = use_text_feature)
 
     def action(
         self, 
@@ -172,13 +173,15 @@ def evaluate_model_with_rulebase(
     rule_model_name,
     match_num = 100,
     device = "cpu",
-    deck_mode = None
+    deck_mode = None,
+    use_text_feature = True
 ):
     win_num = 0
 
     agent = MlAgent(
         check_model_dir,
-        device = device   
+        device = device,
+        use_text_feature = use_text_feature   
     )
     for i in tqdm(range(int(match_num)), desc = "agent: player1", leave=False, position=0):
         p1_agent = agent
