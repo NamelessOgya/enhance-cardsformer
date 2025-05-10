@@ -106,7 +106,7 @@ def create_buffers(flags, device_iterator):
             buffers[device][position] = _buffers
     return buffers
 
-def act(i, device, free_queue, full_queue, model, buffers, flags, stop_event, prediction_model_name):
+def act(i, device, free_queue, full_queue, model, buffers, flags, stop_event, prediction_model_name,deck_mode = None):
     """
     This function will run forever until we stop it. It will generate
     data from the environment and send the data to buffer. It uses
@@ -123,7 +123,7 @@ def act(i, device, free_queue, full_queue, model, buffers, flags, stop_event, pr
     T = flags.unroll_length
     log.info('Device %s Actor %i started.', str(device), i)
     
-    game = Hearthstone(deck_mode=DECK_MODE)
+    game = Hearthstone(deck_mode=deck_mode)
     env = Environment(game, device)
     
     done_buf = {p: [] for p in positions}

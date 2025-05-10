@@ -13,6 +13,13 @@ from experiment.util.experiment_util import get_experiment_code
 from experiment.util.wandb_util import generate_experiment_info #api keyと親ディレクトリ名に応じたexperiment_nameを取得
 from experiment.train_simple_model.util.model_util import find_best_policy_model
 
+
+
+####### config ##########
+# 後でhydra化
+DECK_MODE = "train" # train用の限られたデッキで学習するか。"train", "test", None(全デッキ)
+##########################
+
 def path_generator():
     
     return {
@@ -66,6 +73,7 @@ if __name__ == "__main__":
         policy_model_load_path =  dir_dic["policy_model_load_path"],
         total_frames = TOTAL_POLICY_FRAME,
         best_policy_model_dir = best_policy_model_dir,
+        deck_mode = DECK_MODE
     )
 
     torch.cuda.empty_cache()

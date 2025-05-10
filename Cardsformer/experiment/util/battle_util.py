@@ -127,9 +127,10 @@ class RuleAgent:
 
 def battle(
     player1_model,
-    player2_model
+    player2_model,
+    deck_mode = None
 ):
-    game = Hearthstone()
+    game = Hearthstone(deck_mode=deck_mode)
     env = Environment(game, device)
     position, obs, options, done, episode_return = env.initial()
 
@@ -161,7 +162,8 @@ def battle(
 def evaluate_model_with_rulebase(
     check_model_dir,
     rule_model_name,
-    match_num = 100
+    match_num = 100,
+    deck_mode = None
 ):
     win_num = 0
     for i in range(match_num/ 2):
@@ -171,7 +173,12 @@ def evaluate_model_with_rulebase(
         )
         p2_agent = RuleAgent(model_name = "RandomAgent")
 
-        
+        res = battle(
+            p1_agent,
+            p2_agent,
+            deck_mode = deck_mode
+        )
+
         win_num += res["Player1"]
     
     for i in range(match_num/ 2):
@@ -181,6 +188,11 @@ def evaluate_model_with_rulebase(
             "trained_policy_model/Cardsformer/Trained_weights_1000000.ckpt"    
         )
 
+        res = battle(
+            p1_agent,
+            p2_agent,
+            deck_mode = deck_mode
+        )
         
         win_num += res["Player2"]
     
