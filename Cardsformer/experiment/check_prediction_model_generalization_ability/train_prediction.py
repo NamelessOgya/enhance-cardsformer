@@ -28,11 +28,11 @@ from datetime import datetime, timezone, timedelta
 
 from experiment.util.metrics_util import accuracy_per_item
 
-# os.environ["CUDA_VISIBLE_DEVICES"] = "4,5,6"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 ##### configs ########
 mode = "test"
-batch_size = 8000
+batch_size = 18000
 lr = 0.0001
 train_step = 5000
 ######################
@@ -84,7 +84,7 @@ model = PredictionModel(is_train=True)
 
 
 data = PredictionDataset(
-    [i for i in range(10)] if not mode == "debug" else [1],
+    [i for i in range(5)] if not mode == "debug" else [1],
     base_path="./experiment/check_prediction_model_generalization_ability/off_line_data",
     test=False
 )

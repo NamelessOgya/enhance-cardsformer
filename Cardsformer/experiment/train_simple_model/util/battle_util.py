@@ -24,6 +24,9 @@ clr.AddReference(
 
 from typing import OrderedDict
 
+DECK_MODE = "train"
+print(f"DECKMODE: {DECK_MODE}")
+
 
 # from transformers import AutoModel, AutoTokenizer
 import torch
@@ -136,7 +139,7 @@ def battle(
     player1_model,
     player2_model
 ):
-    game = Hearthstone()
+    game = Hearthstone(deck_mode=DECK_MODE)
     env = Environment(game, device)
     position, obs, options, done, episode_return = env.initial()
 

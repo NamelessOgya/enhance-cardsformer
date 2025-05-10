@@ -18,7 +18,8 @@ from Model.PredictionModel import PredictionModel
 
 import logging
 
-
+DECKMODE = "train"
+print(f"DECKMODE: {DECKMODE}")
 
 shandle = logging.StreamHandler()
 shandle.setFormatter(
@@ -122,7 +123,7 @@ def act(i, device, free_queue, full_queue, model, buffers, flags, stop_event, pr
     T = flags.unroll_length
     log.info('Device %s Actor %i started.', str(device), i)
     
-    game = Hearthstone()
+    game = Hearthstone(deck_mode=DECK_MODE)
     env = Environment(game, device)
     
     done_buf = {p: [] for p in positions}

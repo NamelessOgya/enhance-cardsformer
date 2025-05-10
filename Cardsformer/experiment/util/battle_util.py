@@ -39,7 +39,7 @@ from Model.ModelWrapper import Model as PolicyModel
 
 
 from experiment.util.data_util import NpyLogData
-from experiment.util.model_util import load_prediction_model, load_policy_model, load_encoder
+from experiment.train_simple_model.util.model_util import load_policy_model, load_encoder
 
 from SabberStoneBasicAI.CompetitionEvaluation import Agent
 
@@ -71,11 +71,9 @@ class MlAgent:
     """
     def __init__(
         self, 
-        prediction_model_tar_path, 
         policy_model_checkpoint_path
     ):
         self.encoder = load_encoder() #言語情報をembeddingするためのencoder
-        self.prediction_model = load_prediction_model(prediction_model_tar_path) 
         self.policy_model = load_policy_model(policy_model_checkpoint_path)
 
     def action(
@@ -92,19 +90,6 @@ class MlAgent:
             weapon_embed = self.encoder.encode(obs['weapon_names']).to(device)
             secret_embed = self.encoder.encode(obs['secret_names']).to(device)
 
-            next_state = self.prediction_model(
-                [
-                    hand_card_embed, 
-                    minion_embed, 
-                    weapon_embed, 
-                    obs['hand_card_scalar_batch'].to(device), 
-                    obs['minion_scalar_batch'].to(device), 
-                    obs['hero_scalar_batch'].to(device)
-                ]
-            )
-            obs['next_minion_scalar'] = next_state[0]
-            obs['next_hero_scalar'] = next_state[1]
-
             agent_output = self.policy_model.forward(
                 hand_card_embed, 
                 minion_embed, 
@@ -120,6 +105,7 @@ class MlAgent:
             action = options[action_idx]
         
         return action
+
 
 class RuleAgent:
     def __init__(self, model_name):
@@ -171,6 +157,34 @@ def battle(
     }
 
 
+
+def evaluate_model_with_rulebase(
+    check_model_dir,
+    rule_model_name,
+    match_num = 100
+):
+    win_num = 0
+    for i in range(match_num/ 2):
+        p1_agent = MlAgent(
+            "trained_models/prediction_model4715.tar", 
+            "trained_policy_model/Cardsformer/Trained_weights_1000000.ckpt"    
+        )
+        p2_agent = RuleAgent(model_name = "RandomAgent")
+
+        
+        win_num += res["Player1"]
+    
+    for i in range(match_num/ 2):
+        p1_agent = RuleAgent(model_name = "RandomAgent")
+        p2_agent = MlAgent(
+            "trained_models/prediction_model4715.tar", 
+            "trained_policy_model/Cardsformer/Trained_weights_1000000.ckpt"    
+        )
+
+        
+        win_num += res["Player2"]
+    
+    return win_num/ match_num
 
 
 

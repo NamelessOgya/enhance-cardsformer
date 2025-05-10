@@ -62,6 +62,12 @@ def load_policy_model(checkpoint_path):
 
     return model
 
+def load_simple_policy_model(checkpoint_path):
+    model =SimplePolicyModel(device=device)
+    checkpoint_states = torch.load(checkpoint_path,map_location=device)
+    model.get_model().load_state_dict(checkpoint_states)  
+
+    return model
 
 def load_encoder():
     tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-mpnet-base-v2")
@@ -98,4 +104,4 @@ def find_best_policy_model(model_dir):
 
 
 if __name__ == "__main__":
-    print(find_best_prediction_model("./experiment/prediction_policy_cycle/prediction_models/cycle_0"))
+    load_encoder()
