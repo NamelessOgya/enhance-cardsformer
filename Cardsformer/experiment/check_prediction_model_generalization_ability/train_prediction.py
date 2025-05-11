@@ -170,20 +170,20 @@ for epoch in range(train_step):
         log.info('Best loss: {}'.format(test_loss))
         
         best_test_loss = test_loss
-        if epoch % 100 == 0:
-            # torch.save(
-            #     {
-            #         'model_state_dict': model.state_dict(),
-            #         'optimizer_state_dict': optimizer.state_dict(),
-            #     }, './experiment/check_prediction_model_generalization_ability/trained_models/prediction_model' + str(epoch) + '.tar'
-            #     )
-            torch.save(
-                {
-                    'model_state_dict': model.module.state_dict(),  # ← DataParallel対応
-                    'optimizer_state_dict': optimizer.state_dict(),
-                },
-                './experiment/check_prediction_model_generalization_ability/trained_models/prediction_model' + str(epoch) + '.tar'
-            )
+
+        # torch.save(
+        #     {
+        #         'model_state_dict': model.state_dict(),
+        #         'optimizer_state_dict': optimizer.state_dict(),
+        #     }, './experiment/check_prediction_model_generalization_ability/trained_models/prediction_model' + str(epoch) + '.tar'
+        #     )
+        torch.save(
+            {
+                'model_state_dict': model.module.state_dict(),  # ← DataParallel対応
+                'optimizer_state_dict': optimizer.state_dict(),
+            },
+            './experiment/check_prediction_model_generalization_ability/trained_models/prediction_model' + str(epoch) + '.tar'
+        )
         wandb.log({"best_test_loss": best_test_loss, "model_path": './experiment/check_prediction_model_generalization_ability/trained_models/prediction_model' + str(epoch) + '.tar'})
         
     # writer.add_scalar('best_test_loss', best_test_loss.item(), epoch)
