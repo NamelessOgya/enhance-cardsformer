@@ -1,6 +1,10 @@
 import os
 import subprocess
 
+"""
+    python -m build_env
+"""
+
 cs_file = "../bot/DrunkenAggroWarriorAgent.cs"
 
 result = subprocess.run(["dotnet", "restore"], capture_output=True, text=True)

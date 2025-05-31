@@ -61,7 +61,7 @@ def train_prediction_model(data_dir, model_dir, best_model_path, train_step):
     device = 'cpu' ## <-?????
     if torch.cuda.is_available():
         device = torch.cuda.current_device()
-        model = torch.nn.DataParallel(model).to(device)
+        model = torch.nn.DataParallel(model).to(f"cuda:{device}")
     loss_fn = torch.nn.MSELoss()
     
     best_test_loss = 100
@@ -116,7 +116,7 @@ def train_prediction_model(data_dir, model_dir, best_model_path, train_step):
 
             wandb.log({"PREDICTION_best_test_loss": best_test_loss, "model_path": 'trained_models/prediction_model' + str(epoch) + '.tar'})
             
-        writer.add_scalar('best_test_loss', best_test_loss.item(), epoch)
+        writer.add_scalar('best_test_loss', best_test_loss, epoch)
         wandb.log({"PREDICTION_best_test_loss": best_test_loss, "epoch": epoch})
 
     

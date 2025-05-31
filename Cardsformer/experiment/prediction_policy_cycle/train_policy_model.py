@@ -34,9 +34,9 @@ import wandb
 
 
 from experiment.util.data_util import NpyLogData
-from experiment.train_simple_model.util.battle_util import evaluate_model_with_rulebase
-
 import gc
+
+from experiment.prediction_policy_cycle.util.battle_util import evaluate_model_with_rulebase
 
 
 mean_episode_return_buf = {
@@ -69,19 +69,7 @@ def learn(position, actor_models, model, batch, optimizer, flags, lock):
     next_minion_scalar = batch['next_minion_scalar'].to(device)
     next_hero_scalar = batch['next_hero_scalar'].to(device)
     with lock:
-        learner_outputs = model(
-            hand_card_embed, 
-            minion_embed, 
-            secret_embed, 
-            weapon_embed, 
-            hand_card_scalar, 
-            minion_scalar, 
-            hero_scalar, 
-            next_minion_scalar, 
-            next_hero_scalar, 
-            num_options=None, 
-            actor = False
-        )
+        learner_outputs = model(hand_card_embed, minion_embed, secret_embed, weapon_embed, hand_card_scalar, minion_scalar, hero_scalar, next_minion_scalar, next_hero_scalar, num_options=None, actor = False)
         loss = compute_loss(learner_outputs, target)
         stats = {
             'mean_episode_return_' + position:
@@ -148,6 +136,7 @@ def train(
         assert flags.num_actor_devices <= len(
             flags.gpu_devices.split(',')
         ), 'The number of actor devices can not exceed the number of available devices'
+
 
     models = {}
     for device in device_iterator:
@@ -288,17 +277,17 @@ def train(
         torch.save(
             learner_model.get_model().state_dict(),
             model_weights_dir)
-        
         res_dic = {}
         for i in ["RandomAgent", "GreedyAgent"]:
             print(f"=== evaluating vs {i}... ===")
             win_rate = evaluate_model_with_rulebase(
                 check_model_dir = model_weights_dir,
+                prediction_model = prediction_model,
                 rule_model_name = i,
                 match_num = 100,
                 device = "cpu",
-                deck_mode = deck_mode,
-                use_text_feature = use_text_feature
+                deck_mode = None,
+                use_text_feature = True
             )
             print(f"evaluation done {win_rate}")
             res_dic[f"WIN_RATE_against_{i}"] = win_rate
@@ -401,6 +390,8 @@ def train_policy_model(
     print("==================")
     print(flags)
     print("==================")
+
+    print(f"prediction_model: {prediction_model}" )
 	
     print(model_save_dir)
     if not os.path.exists(model_save_dir):
