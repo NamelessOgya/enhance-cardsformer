@@ -26,7 +26,7 @@ def path_generator():
     
     return {
         "policy_model_save_path":f"experiment/train_simple_model/res/{exp_code}/policy_models",
-        "policy_model_load_path":"NONE",
+        "policy_model_load_path":f"experiment/train_simple_model/res/tmp_train_all/policy_models"
     }
 
 TOTAL_POLICY_FRAME = 50000000      #policy modelを学習する際のframe数
