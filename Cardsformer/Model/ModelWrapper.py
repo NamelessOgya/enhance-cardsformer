@@ -1,8 +1,35 @@
 from Model.PolicyModel import PolicyModel
 import torch
+import re
 
 device ="cuda:0" if torch.cuda.is_available() else "cpu"
 print(device)
+
+def normalize_device(device: str) -> str:
+    """
+    device が
+      - 数字のみの文字列 ("0", "1", ...)
+        → "cuda:{数字}" を返す
+      - "cuda:数字" の形式
+        → そのまま返す
+      - それ以外
+        → ValueError を投げる
+    """
+    if device == "cpu":
+        return "cpu"
+    if not isinstance(device, str):
+        raise TypeError(f"device must be str, but got {type(device).__name__}")
+
+    # 数字のみ ("0", "1", "10" など)
+    if device.isdigit():
+        return f"cuda:{device}"
+
+    # すでに "cuda:数字" 形式
+    if re.fullmatch(r"cuda:\d+", device):
+        return device
+
+    # それ以外はエラー
+    raise ValueError(f"invalid device format: {device!r}")
 
 class Model:
     """
@@ -13,7 +40,7 @@ class Model:
         """
             device: device_id(str) ex: "0"
         """
-        self.device = device
+        self.device = normalize_device(device)
         self.models = {}
         
         print(f"device is {self.device}")

@@ -28,14 +28,14 @@ def path_generator(cycle):
     }
 
 CYCLE = 1
-TOTAL_PREDICTION_EPOCH  = 500       #prediction modelを学習する際のframe数(おおむね)
+TOTAL_PREDICTION_EPOCH  = 1000       #prediction modelを学習する際のframe数(おおむね)
 TOTAL_prediction_FRAMES = 800000  # prediction modelの学習に用いる全フレーム数
-TOTAL_POLICY_FRAME = 10000000      #policy modelを学習する際のframe数
+TOTAL_POLICY_FRAME = 50000000      #policy modelを学習する際のframe数
 
-
-# TOTAL_PREDICTION_EPOCH  = 5       #prediction modelを学習する際のframe数(おおむね)
-# TOTAL_prediction_FRAMES = 8000  # prediction modelの学習に用いる全フレーム数
-# TOTAL_POLICY_FRAME = 100000      #policy modelを学習する際のframe数
+CYCLE = 5
+TOTAL_PREDICTION_EPOCH  = 5       #prediction modelを学習する際のframe数(おおむね)
+TOTAL_prediction_FRAMES = 8000  # prediction modelの学習に用いる全フレーム数
+TOTAL_POLICY_FRAME = 50000      #policy modelを学習する際のframe数
 
 
 

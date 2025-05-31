@@ -36,6 +36,8 @@ import wandb
 from experiment.util.data_util import NpyLogData
 import gc
 
+from experiment.prediction_policy_cycle.util.battle_util import evaluate_model_with_rulebase
+
 
 mean_episode_return_buf = {
     p: deque(maxlen=100)
@@ -134,6 +136,7 @@ def train(
         assert flags.num_actor_devices <= len(
             flags.gpu_devices.split(',')
         ), 'The number of actor devices can not exceed the number of available devices'
+
 
     models = {}
     for device in device_iterator:
@@ -274,6 +277,21 @@ def train(
         torch.save(
             learner_model.get_model().state_dict(),
             model_weights_dir)
+        res_dic = {}
+        for i in ["RandomAgent", "GreedyAgent"]:
+            print(f"=== evaluating vs {i}... ===")
+            win_rate = evaluate_model_with_rulebase(
+                check_model_dir = model_weights_dir,
+                prediction_model = prediction_model,
+                rule_model_name = i,
+                match_num = 100,
+                device = "cpu",
+                deck_mode = None,
+                use_text_feature = True
+            )
+            print(f"evaluation done {win_rate}")
+            res_dic[f"WIN_RATE_against_{i}"] = win_rate
+        wandb.log(res_dic)
 
     fps_log = []
     timer = timeit.default_timer
@@ -372,6 +390,8 @@ def train_policy_model(
     print("==================")
     print(flags)
     print("==================")
+
+    print(f"prediction_model: {prediction_model}" )
 	
     print(model_save_dir)
     if not os.path.exists(model_save_dir):
