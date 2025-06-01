@@ -5,9 +5,6 @@ xpid: "Cardsformer"
 # project name
 PROJ_NAME: "simple_model"
 
-# 学習対象のデッキ設定: "train" | "test" | null (全デッキ)
-deck_mode: null
-
 # 学習するフレーム数
 total_frames: 10000000
 
@@ -22,7 +19,7 @@ policy_model_load_path: "NONE" #"experiment/train_simple_model/res/tmp_train_all
 training_device: "0"
 num_threads: 1
 
-gpu_devices: "1"
+gpu_devices: "0,1"
 
 num_actor_devices: 1
 num_actors: 2
@@ -30,8 +27,7 @@ num_actors: 2
 frame_interval: 100000
 unroll_length: 100
 
-actor_device_cpu: true
-gpu_devices: "1"
+actor_device_cpu: false
 
 num_buffers: 30
 disable_checkpoint: false
@@ -41,3 +37,4 @@ learning_rate: 0.0001
 momentum: 0
 epsilon: 1e-5
 alpha: 0.99
+exp_epsilon: 0.01
