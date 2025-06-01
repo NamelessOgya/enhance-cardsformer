@@ -48,10 +48,10 @@ def compute_loss(logits, targets):
     loss = ((logits.view(-1) - targets)**2).mean()
     return loss
 
-def learn(position, actor_models, model, batch, optimizer, flags, lock):
+def learn(position, actor_models, model, batch, optimizer, cfg, lock):
     """Performs a learning (optimization) step."""
-    if flags.training_device != "cpu":
-        device = torch.device('cuda:' + str(flags.training_device))
+    if cfg.training_device != "cpu":
+        device = torch.device('cuda:' + str(cfg.training_device))
     else:
         device = torch.device('cpu')
     hand_card_embed = batch['hand_card_embed'].to(device)
@@ -92,7 +92,7 @@ def learn(position, actor_models, model, batch, optimizer, flags, lock):
 
         optimizer.zero_grad()
         loss.backward()
-        nn.utils.clip_grad_norm_(model.parameters(), flags.max_grad_norm)
+        nn.utils.clip_grad_norm_(model.parameters(), cfg.max_grad_norm)
         optimizer.step()
 
         for actor_model in actor_models.values():
@@ -100,7 +100,7 @@ def learn(position, actor_models, model, batch, optimizer, flags, lock):
         return stats
 
 def train(
-        flags,
+        cfg,
         policy_model_load_path,
         best_policy_model_dir,
         deck_mode = None,
@@ -118,31 +118,31 @@ def train(
 
     ##### 結果格納dirの作成 ###########
     model_save_dir = os.path.expanduser('%s/%s' %
-                            (flags.savedir, flags.xpid))
+                            (cfg.savedir, cfg.xpid))
         
     print(f"save_model_dir : {model_save_dir}")
     if not os.path.exists(model_save_dir):
         os.makedirs(model_save_dir)
 
     ##################################
-    if not flags.actor_device_cpu or flags.training_device != 'cpu':
+    if not cfg.actor_device_cpu or cfg.training_device != 'cpu':
         if not torch.cuda.is_available():
             raise AssertionError(
                 "CUDA not available. If you have GPUs, please specify the ID after `--gpu_devices`. Otherwise, please train with CPU with `python3 train.py --actor_device_cpu --training_device cpu`"
             )
     checkpointpath = os.path.expanduser('%s/%s/%s' %
-                           (flags.savedir, flags.xpid, 'model.tar'))
+                           (cfg.savedir, cfg.xpid, 'model.tar'))
     
     
-    T = flags.unroll_length
-    B = flags.batch_size
+    T = cfg.unroll_length
+    B = cfg.batch_size
 
-    if flags.actor_device_cpu:
+    if cfg.actor_device_cpu:
         device_iterator = ['1']
     else:
-        device_iterator = range(flags.num_actor_devices)
-        assert flags.num_actor_devices <= len(
-            flags.gpu_devices.split(',')
+        device_iterator = range(cfg.num_actor_devices)
+        assert cfg.num_actor_devices <= len(
+            cfg.gpu_devices.split(',')
         ), 'The number of actor devices can not exceed the number of available devices'
 
     models = {}
@@ -151,7 +151,7 @@ def train(
         model.share_memory()
         model.eval()
         models[device] = model
-    buffers = create_buffers(flags, device_iterator)
+    buffers = create_buffers(cfg, device_iterator)
 
     ctx = mp.get_context('spawn')
     free_queue = {}
@@ -167,10 +167,13 @@ def train(
         }
         free_queue[device] = _free_queue
         full_queue[device] = _full_queue
-    learner_model = Model(device=flags.training_device,use_text_feature = use_text_feature)
+    learner_model = Model(
+        device=cfg.training_device,
+        use_text_feature = use_text_feature
+    )
 
 
-    optimizer = create_optimizers(flags, learner_model)
+    optimizer = create_optimizers(cfg, learner_model)
     stat_keys = [
         'mean_episode_return_Player1',
         'loss_Player1',
@@ -185,11 +188,12 @@ def train(
     print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
     print(policy_model_load_path)
     print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+    
     if policy_model_load_path != "NONE":
         checkpoint_states = torch.load(
             policy_model_load_path + "/Cardsformer/model.tar",
-            map_location=("cuda:" + str(flags.training_device)
-                          if flags.training_device != "cpu" else "cpu"))
+            map_location=("cuda:" + str(cfg.training_device)
+                          if cfg.training_device != "cpu" else "cpu"))
         learner_model.get_model().load_state_dict(checkpoint_states["model_state_dict"])
         optimizer.load_state_dict(checkpoint_states["optimizer_state_dict"])
         for device in device_iterator:
@@ -204,12 +208,12 @@ def train(
     parent_stop_event, child_stop_event = mp.Pipe()
     
     for device in device_iterator:
-        num_actors = flags.num_actors
+        num_actors = cfg.num_actors
         for i in range(num_actors):
             actor = ctx.Process(target=act,
                                 args=(i, device, free_queue[device],
                                       full_queue[device], models[device],
-                                      buffers[device], flags, child_stop_event))
+                                      buffers[device], cfg, child_stop_event))
             actor.start()
             actor_processes.append(actor)
 
@@ -224,17 +228,17 @@ def train(
                         lock=threading.Lock()):
         """Thread target for the learning process."""
         nonlocal frames, position_frames, stats
-        while frames < flags.total_frames:
+        while frames < cfg.total_frames:
             batch = get_batch(free_queue[device][position],
                               full_queue[device][position],
-                              buffers[device][position], flags, local_lock)
+                              buffers[device][position], cfg, local_lock)
             if frames % 10000 == 0:
                 # バッチを保存
                 npy_data.save_data_from_buffer(batch)
                 # 保存後に内部バッファ（self.data）をクリア
                 for k in npy_data.data:
                     npy_data.data[k].clear()
-            _stats = learn(position, models, learner_model.get_model(), batch, optimizer, flags, position_lock)
+            _stats = learn(position, models, learner_model.get_model(), batch, optimizer, cfg, position_lock)
             
              # バッチ自体も消す
             del batch
@@ -249,7 +253,7 @@ def train(
                 position_frames[position] += T * B
 
     for device in device_iterator:
-        for m in range(flags.num_buffers):
+        for m in range(cfg.num_buffers):
             free_queue[device]['Player1'].put(m)
             free_queue[device]['Player2'].put(m)
 
@@ -266,7 +270,7 @@ def train(
     }
 
     for device in device_iterator:
-        for i in range(flags.num_threads):
+        for i in range(cfg.num_threads):
             for position in ['Player1', 'Player2']:
                 thread = threading.Thread(target=batch_and_learn,
                                           name='batch-and-learn-%d' % i,
@@ -277,7 +281,7 @@ def train(
                 threads.append(thread)
 
     def checkpoint(frames):
-        if flags.disable_checkpoint:
+        if cfg.disable_checkpoint:
             return
         log.info('Saving checkpoint to %s', checkpointpath)
         _model = learner_model.get_model()
@@ -286,7 +290,7 @@ def train(
                 'model_state_dict': _model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
                 "stats": stats,
-                'flags': vars(flags),
+                'cfg': vars(cfg),
                 'frames': frames,
                 'position_frames': position_frames
             }, checkpointpath)
@@ -294,7 +298,7 @@ def train(
         # Save the weights for evaluation purpose
         model_weights_dir = os.path.expandvars(
             os.path.expanduser('%s/%s/%s' %
-                                (flags.savedir, flags.xpid, 'Trained_weights_' + str(frames) + '.ckpt')))
+                                (cfg.savedir, cfg.xpid, 'Trained_weights_' + str(frames) + '.ckpt')))
         torch.save(
             learner_model.get_model().state_dict(),
             model_weights_dir)
@@ -321,8 +325,8 @@ def train(
     fps_log = []
     timer = timeit.default_timer
     try:
-        last_save_frame = frames - (frames % flags.frame_interval)
-        while frames < flags.total_frames:
+        last_save_frame = frames - (frames % cfg.frame_interval)
+        while frames < cfg.total_frames:
             start_frames = frames
             position_start_frames = {
                 k: position_frames[k]
@@ -331,10 +335,10 @@ def train(
             start_time = timer()
             time.sleep(5)
 
-            if frames - last_save_frame > flags.frame_interval:
+            if frames - last_save_frame > cfg.frame_interval:
                 print("mdoel saved!")
-                checkpoint(frames - (frames % flags.frame_interval))
-                last_save_frame = frames - (frames % flags.frame_interval)
+                checkpoint(frames - (frames % cfg.frame_interval))
+                last_save_frame = frames - (frames % cfg.frame_interval)
             end_time = timer()
             fps = (frames - start_frames) / (end_time - start_time)
             fps_log.append(fps)
@@ -406,30 +410,22 @@ def train_policy_model(
         model_save_dir,
         policy_model_load_path,
         best_policy_model_dir,
-        total_frames,
         deck_mode = None,
-        use_text_feature = True
+        use_text_feature = True,
+        cfg = None
 
     ):
-    flags = parser.parse_args()
-    flags.total_frames = total_frames
-    flags.frame_interval = 100000 # デバッグ用暫定対処
-    flags.gpu_devices = "1"
-    flags.num_actors = 2
-    print("==================")
-    print(flags)
-    print("==================")
 	
     print(model_save_dir)
     if not os.path.exists(model_save_dir):
         os.makedirs(model_save_dir)
 
-    flags.savedir = model_save_dir
-    print(f"== save_dir = {flags.savedir} ==")
+    cfg.savedir = model_save_dir
+    print(f"== save_dir = {cfg.savedir} ==")
     
-    print(f"total frames ======== {flags.total_frames}")
+    print(f"total frames ======== {cfg.total_frames}")
     train(
-        flags,
+        cfg,
         policy_model_load_path,
         best_policy_model_dir,
         deck_mode,

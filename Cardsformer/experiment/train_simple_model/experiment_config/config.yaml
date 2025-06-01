@@ -1,0 +1,40 @@
+# expcode
+expcode: "train_simple_model"
+xpid: "Cardsformer"
+
+# project name
+PROJ_NAME: "simple_model"
+
+# 学習するフレーム数
+total_frames: 10000000
+
+max_grad_norm: 40.0
+
+# 学習設定
+USE_TEXT_FEATURE: True # True | False
+DECK_MODE: "train" # None | "train" | "test"
+policy_model_load_path: "NONE" #"experiment/train_simple_model/res/tmp_train_all/policy_models"
+
+# gpu関連
+training_device: "0"
+num_threads: 1
+
+gpu_devices: "0,1"
+
+num_actor_devices: 1
+num_actors: 2
+
+frame_interval: 100000
+unroll_length: 100
+
+actor_device_cpu: false
+
+num_buffers: 30
+disable_checkpoint: false
+
+batch_size: 10
+learning_rate: 0.0001
+momentum: 0
+epsilon: 1e-5
+alpha: 0.99
+exp_epsilon: 0.01
